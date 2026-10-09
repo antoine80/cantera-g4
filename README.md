@@ -22,3 +22,7 @@ En cada cambio de la rama main, GitHub Actions ejecuta `node --test tests/*.test
 ## Importación privada desde un HAR (sin publicar datos en GitHub)
 
 El proyecto incluye un control **Cargar calendario privado** que admite un JSON previamente depurado. El archivo se queda exclusivamente en el almacenamiento local del navegador (`localStorage`) y no se envía a GitHub ni a FFCV. El botón **Eliminar copia local** revierte a los datos públicos. La importación no equivale a actualización automática; el JSON representa la fecha de la captura y puede quedar desactualizado. La caché del sitio continúa siendo pública pero **no incluye** el calendario privado.
+
+## Diagnóstico de conectividad FFCV (9 octubre 2026)
+
+La consulta de prueba desde el runner de GitHub Actions al endpoint público de jornada 1 devolvió **HTTP 403**. En Chrome, una captura HAR del usuario sí recogió JSON con las nueve jornadas. La causa exacta del rechazo no está confirmada. Por eso **no debe activarse `FFCV_SYNC_ENABLED` en GitHub Actions**: las consultas fallarán y los datos no se actualizarán. La importación desde un JSON local sigue siendo la alternativa para la PWA pública. Cuando el proyecto se traslade a un servidor privado accesible por VPN, se podrá comprobar allí la conectividad y las condiciones de uso de FFCV antes de programar sincronizaciones. Los procesos no deben intentar sortear el rechazo del servidor.

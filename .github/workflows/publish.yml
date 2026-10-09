@@ -45,14 +45,3 @@ jobs:
       - name: Publicar en GitHub Pages
         uses: actions/deploy-pages@v4
 
-  diagnostico_ffcv:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Comprobar conectividad (sin publicar datos)
-        continue-on-error: true
-        run: node scripts/probe_ffcv.mjs
