@@ -37,6 +37,11 @@ select{background:white;border:1px solid #d9e2ec;border-radius:10px;padding:11px
 .side{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;align-items:center;font-size:12px}.side strong{font-weight:750;line-height:1.35}
 .crest{background:#eaf1fa;border:1px solid #d7e4ef;border-radius:13px;width:39px;height:39px;display:grid;place-items:center;color:#235c83;font-size:12px;font-weight:850}
 .score{min-width:75px;font-size:19px;font-weight:900;color:#103653}.score.timed{font-size:16px;color:#68849a}
+.venue-link{display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;text-decoration:none;color:#135882;background:#f3f9ff;line-height:1.45;cursor:pointer}
+.venue-link:focus-visible{outline:3px solid #067cc0;outline-offset:-3px}
+.venue-link:hover{text-decoration:underline;background:#e7f4ff}
+.venue-link .venue-address{color:#526e84;flex-basis:100%;font-weight:450}
+.venue-link .venue-go{color:#006eb3;font-weight:800;margin-left:auto;white-space:nowrap}
 .venue{border-top:1px solid #edf0f4;padding:11px 16px;font-size:11px;color:#7890a3}
 .rest{padding:18px;font-size:13px;color:#526e85}.rest strong{color:#173b5c}
 .tablewrap{overflow:auto;border-radius:14px;border:1px solid #e0e6ee;background:white}
@@ -61,6 +66,7 @@ footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top
 <footer>Proyecto independiente, no afiliado a FFCV. Los datos están sujetos a las condiciones de la federación.<div id="updated">Sin sincronización confirmada</div></footer></main>
 <nav class="bottom"><button data-view="partidos" class="active"><span>⚽</span>Partidos</button><button data-view="clasificacion"><span>▤</span>Tabla</button><button data-view="equipos"><span>♟</span>Equipos</button><button data-view="favoritos"><span>☆</span>Favoritos</button></nav>
 <script src="./client/har-import.js"></script>
+<script src="./client/venues.js"></script>
 <script>
 "use strict";
 var state={data:null,view:"partidos",round:"all",team:"",favorites:[]};
@@ -82,7 +88,7 @@ if(!all.length&&!byes.length)return empty("Jornada pendiente de importar","Este 
 var rounds=[...new Set(all.map(function(m){return m.round}).concat(byes.map(function(b){return b.round})))].sort(function(a,b){return a-b});
 return rounds.map(function(r){var matches=all.filter(function(m){return m.round===r}).sort(function(a,b){return a.date.localeCompare(b.date)||(a.time||"").localeCompare(b.time||"")});
 var cards=matches.map(function(m){var a=team(m.home),b=team(m.away);if(!a||!b)return "";var done=finished(m);var status=done?"FINALIZADO":m.status==="postponed"?"APLAZADO":m.status==="unverified"?"REVISAR":"PROGRAMADO";
-return '<article class="match"><div class="matchtop"><span>'+safe(when(m.date))+'</span><span class="tag">'+status+'</span></div><div class="matchbody"><div class="side">'+crest(a)+"<strong>"+safe(a.name)+'</strong></div><div class="score '+(done?"":"timed")+'">'+(done?m.homeScore+" – "+m.awayScore:safe(m.time||"—"))+'</div><div class="side">'+crest(b)+"<strong>"+safe(b.name)+'</strong></div></div>'+(m.venue?'<div class="venue">📍 '+safe(m.venue)+"</div>":"")+"</article>"}).join("");
+return '<article class="match"><div class="matchtop"><span>'+safe(when(m.date))+'</span><span class="tag">'+status+'</span></div><div class="matchbody"><div class="side">'+crest(a)+"<strong>"+safe(a.name)+'</strong></div><div class="score '+(done?"":"timed")+'">'+(done?m.homeScore+" – "+m.awayScore:safe(m.time||"—"))+'</div><div class="side">'+crest(b)+"<strong>"+safe(b.name)+'</strong></div></div>'+(m.venue?(function(){var loc=CanteraVenues.maps(m.venue);return loc?'<a class="venue venue-link" href="'+safe(loc.href)+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir Google Maps para '+safe(m.venue)+'"><span>📍 <strong>'+safe(m.venue)+'</strong></span>'+(loc.address?'<span class="venue-address">'+safe(loc.address)+'</span>':"")+'<span class="venue-go">'+(loc.exact?"Cómo llegar ↗":"Buscar en Maps ↗")+"</span></a>":""})():"")+"</article>"}).join("");
 cards+=byes.filter(function(b){return b.round===r}).map(function(b){return '<article class="match rest"><strong>Descansa</strong><div>'+safe(name(b.team))+"</div></article>"}).join("");
 var verified=(state.data.importedRounds||[]).includes(r);
 return '<div class="roundhead"><span>JORNADA '+r+'</span><small>'+(verified?"Datos JSON FFCV":"Datos parciales")+'</small></div><div class="fixtures">'+cards+"</div>"}).join("")}

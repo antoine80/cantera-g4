@@ -30,6 +30,7 @@ jobs:
         run: |
           node --check scripts/sync_ffcv.mjs
           node --check client/har-import.js
+          node --check client/venues.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
       - name: Descargar y validar las nueve jornadas desde FFCV
@@ -40,7 +41,7 @@ jobs:
           cp index.html sw.js manifest.webmanifest dist/
           cp data/league.json dist/data/
           cp icons/icon.svg dist/icons/
-          cp client/har-import.js dist/client/
+          cp client/*.js dist/client/
           touch dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

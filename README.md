@@ -35,3 +35,9 @@ El botón **Importar HAR / JSON privado** es únicamente una alternativa manual 
 ## Avisos y condiciones
 
 Proyecto independiente, sin afiliación con FFCV. El usuario debe comprobar las condiciones de acceso y redistribución de los datos federativos antes de seguir ofreciendo una web pública. La ejecución programada puede requerir cambios si la Federación modifica su servicio.
+
+## Localización de campos (Google Maps)
+
+En **Partidos**, pulsa el nombre o la dirección del campo para abrir Google Maps con la ruta hacia la instalación. Se han documentado los **diez campos** de las nueve jornadas mediante calendarios oficiales de FFCV publicados en PDF. La dirección es del **recinto deportivo**, no del campo 1 o 2 dentro de la instalación.
+
+Si FFCV cambia un partido a un recinto desconocido, la web ofrece **Buscar en Maps** por nombre sin inventar una dirección. La tabla de localización es `client/venues.js` y dispone de pruebas automáticas `tests/venues.test.mjs`. No se necesita una API key de Google Maps.

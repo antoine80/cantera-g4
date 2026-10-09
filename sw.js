@@ -1,4 +1,4 @@
-const CACHE="cantera-g4-v6",FILES=["./","./index.html","./manifest.webmanifest","./icons/icon.svg","./client/har-import.js"];
+const CACHE="cantera-g4-v7",FILES=["./","./index.html","./manifest.webmanifest","./icons/icon.svg","./client/har-import.js","./client/venues.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener("fetch",e=>{
