@@ -49,14 +49,3 @@ jobs:
           path: dist
       - name: Publicar en GitHub Pages
         uses: actions/deploy-pages@v4
-
-  diagnostico_fuentes:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Inspeccionar clasificación oficial y rutas de escudos
-        run: node scripts/probe_extra.mjs

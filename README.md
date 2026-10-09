@@ -41,3 +41,9 @@ Proyecto independiente, sin afiliación con FFCV. El usuario debe comprobar las 
 En **Partidos**, pulsa el nombre o la dirección del campo para abrir Google Maps con la ruta hacia la instalación. Se han documentado los **diez campos** de las nueve jornadas mediante calendarios oficiales de FFCV publicados en PDF. La dirección es del **recinto deportivo**, no del campo 1 o 2 dentro de la instalación.
 
 Si FFCV cambia un partido a un recinto desconocido, la web ofrece **Buscar en Maps** por nombre sin inventar una dirección. La tabla de localización es `client/venues.js` y dispone de pruebas automáticas `tests/venues.test.mjs`. No se necesita una API key de Google Maps.
+
+## Escudos y clasificación oficial de FFCV
+
+El sincronizador consulta `api/clasificaciones/clasificaciones_ajax.php` con el código exacto del grupo, el token temporal de página y la jornada solicitada. Valida los nueve equipos por su código federativo y almacena la **clasificación oficial** (posiciones, puntos, partidos, victorias, empates, derrotas y goles) en `league.json`. Si la clasificación no está disponible o su estructura cambia, la web presenta expresamente una clasificación **provisional** calculada con marcadores.
+
+Los escudos proceden de los campos `url_img`, `escudo_local` y `escudo_visitante` de las respuestas oficiales. Se utiliza el dominio de imágenes utilizado por FFCV: `appwebffcv.novanet.es`. No se guardan binarios, ni se atribuyen escudos de otros equipos. Si una imagen falla, se muestran las iniciales.

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,fetchRound} from "../scripts/sync_ffcv.mjs";
+import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,fetchRound,crestUrl,parseOfficial,fetchOfficialClassification} from "../scripts/sync_ffcv.mjs";
 const base=JSON.parse(await readFile(new URL("../data/league.json",import.meta.url),"utf8"));
 const sample=JSON.parse(await readFile(new URL("./fixtures/jornada1.json",import.meta.url),"utf8"));
 const ids=new Map(base.teams.map(t=>[String(t.ffcvId),t.id]));
@@ -83,4 +83,44 @@ test("La petición de API contiene el token que entrega la página",async()=>{
 });
 test("El token no se acepta si no está en una etiqueta meta válida",async()=>{
  await assert.rejects(getPageToken(async()=>({ok:true,text:async()=>"<html>sin token</html>"})),/token esperado/);
+});
+
+test("Los escudos FFCV solo admiten rutas de imágenes oficiales",()=>{
+ assert.equal(crestUrl("/pnfg/pimg/Clubes/escudo.png?nova=1"),"https://appwebffcv.novanet.es/pnfg/pimg/Clubes/escudo.png?nova=1");
+ for(const bad of ["javascript:alert(1)","https://example.com/pnfg/image.png","//evil.com/logo.png","/external/img.png","data:image/png;base64,a"])assert.equal(crestUrl(bad),null);
+});
+function officialRaw(){
+ return {estado:"1",codigo_competicion:"905432332",codigo_grupo:"905432336",jornada:"1",clasificacion:base.teams.map((t,i)=>({
+   codequipo:String(t.ffcvId),nombre:t.name,posicion:String(i+1),jugados:"1",
+   ganados:i===0?"1":"0",perdidos:"0",empatados:i===0?"0":"1",
+   goles_a_favor:i===0?"3":"0",goles_en_contra:"0",puntos:i===0?"3":"1",
+   url_img:"/pnfg/pimg/Clubes/"+t.id+".png"
+ }))};
+}
+test("FFCV manda ranking y puntos sin recalcular; nueve escudos oficiales",()=>{
+ const official=officialRaw();
+ const validated=parseOfficial(official,base.teams);
+ assert.equal(validated.rows.length,9);
+ assert.equal(validated.round,1);
+ assert.equal(validated.rows[0].PTS,3);
+ const rounds=new Map(Array.from({length:9},(_,i)=>[i+1,{...clone(sample),jornada:String(i+1)}]));
+ const league=buildLeague(base,rounds,new Date("2026-10-09T00:00:00Z"),official);
+ assert.equal(league.officialStandings.length,9);
+ assert.equal(league.officialStandings[0].rank,1);
+ assert(league.teams.every(t=>t.crestUrl?.startsWith("https://appwebffcv.novanet.es/pnfg/")));
+});
+test("La clasificación de otro grupo o con equipos repetidos se rechaza",()=>{
+ const different=officialRaw();different.codigo_grupo="666";
+ assert.throws(()=>parseOfficial(different,base.teams),/ajena/);
+ const duplicate=officialRaw();duplicate.clasificacion[1].codequipo=duplicate.clasificacion[0].codequipo;
+ assert.throws(()=>parseOfficial(duplicate,base.teams),/incorrectos/);
+});
+test("La API de clasificación incluye token y código del grupo correcto",async()=>{
+ let url,headers;
+ const fake=async(u,opts)=>{url=new URL(u);headers=opts.headers;return {ok:true,text:async()=>JSON.stringify(officialRaw())}};
+ const returned=await fetchOfficialClassification(fake,"a".repeat(64));
+ assert.equal(returned.clasificacion.length,9);
+ assert.equal(url.searchParams.get("cod_grupo"),"905432336");
+ assert.equal(url.searchParams.get("cod_jornada"),"9");
+ assert.equal(headers["X-FFCV-Page-Token"],"a".repeat(64));
 });
