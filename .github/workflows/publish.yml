@@ -1,0 +1,43 @@
+name: Publicar Cantera G4
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "20 6 * * *"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: cantera-g4-pages
+  cancel-in-progress: false
+jobs:
+  publicar:
+    if: github.event_name != 'schedule' || vars.FFCV_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar sintaxis del sincronizador
+        run: node --check scripts/sync_ffcv.mjs
+      - name: Sincronizar las nueve jornadas
+        if: vars.FFCV_SYNC_ENABLED == 'true'
+        run: node scripts/sync_ffcv.mjs
+      - name: Preparar sitio público
+        run: |
+          mkdir -p dist/data dist/icons
+          cp index.html sw.js manifest.webmanifest dist/
+          cp data/league.json dist/data/
+          cp icons/icon.svg dist/icons/
+          touch dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Publicar en GitHub Pages
+        uses: actions/deploy-pages@v4
