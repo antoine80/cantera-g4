@@ -26,6 +26,7 @@ jobs:
       - name: Validar sincronizador y datos sin conexión a FFCV
         run: |
           node --check scripts/sync_ffcv.mjs
+          node --check client/har-import.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
       - name: Sincronizar las nueve jornadas

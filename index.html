@@ -60,8 +60,8 @@ footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top
 <div id="content" aria-live="polite"></div>
 <footer>Proyecto independiente, no afiliado a FFCV. Los datos están sujetos a las condiciones de la federación.<div id="updated">Sin sincronización confirmada</div></footer></main>
 <nav class="bottom"><button data-view="partidos" class="active"><span>⚽</span>Partidos</button><button data-view="clasificacion"><span>▤</span>Tabla</button><button data-view="equipos"><span>♟</span>Equipos</button><button data-view="favoritos"><span>☆</span>Favoritos</button></nav>
-<script src="./client/har-import.js" defer></script>
-<script defer>
+<script src="./client/har-import.js"></script>
+<script>
 "use strict";
 var state={data:null,view:"partidos",round:"all",team:"",favorites:[]};
 try{state.favorites=JSON.parse(localStorage.getItem("cantera-g4-favorites")||"[]")}catch(e){state.favorites=[]}
