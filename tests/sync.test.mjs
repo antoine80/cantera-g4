@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync} from "../scripts/sync_ffcv.mjs";
+import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,fetchRound} from "../scripts/sync_ffcv.mjs";
 const base=JSON.parse(await readFile(new URL("../data/league.json",import.meta.url),"utf8"));
 const sample=JSON.parse(await readFile(new URL("./fixtures/jornada1.json",import.meta.url),"utf8"));
 const ids=new Map(base.teams.map(t=>[String(t.ffcvId),t.id]));
@@ -65,4 +65,22 @@ test("Simulación con nueve respuestas no escribe datos",async()=>{
  const before=await readFile(new URL("../data/league.json",import.meta.url));
  const d=await sync({delay:0,fetcher:async n=>({...clone(sample),jornada:String(n)})});
  assert.equal(d.matches.length,36);assert.deepEqual(await readFile(new URL("../data/league.json",import.meta.url)),before);
+});
+
+test("Un token de página FFCV válido se obtiene de HTML, sin HAR",async()=>{
+ const token="1".repeat(64);
+ const fakeFetch=async()=>({ok:true,text:async()=>'<head><meta name="ffcv-pt" content="'+token+'"></head>'});
+ assert.equal(await getPageToken(fakeFetch),token);
+});
+test("La petición de API contiene el token que entrega la página",async()=>{
+ let headers=null;
+ const fakeFetch=async(u,options)=>{headers=options.headers;return {ok:true,text:async()=>JSON.stringify(sample)}};
+ const token="c".repeat(64);
+ const response=await fetchRound(1,fakeFetch,token);
+ assert.equal(response.jornada,"1");
+ assert.equal(headers["X-FFCV-Page-Token"],token);
+ assert.equal(headers["X-Requested-With"],"XMLHttpRequest");
+});
+test("El token no se acepta si no está en una etiqueta meta válida",async()=>{
+ await assert.rejects(getPageToken(async()=>({ok:true,text:async()=>"<html>sin token</html>"})),/token esperado/);
 });

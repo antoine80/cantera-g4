@@ -10,6 +10,17 @@ export const SETTINGS=Object.freeze({
 });
 const scoreRegex=/^(\d{1,2})\s*[-–]\s*(\d{1,2})$/;
 const pause=ms=>new Promise(ok=>setTimeout(ok,ms));
+const TOKEN_PAGE="https://ffcv.es/competiciones/";
+export async function getPageToken(fetchImpl=fetch){
+ const response=await fetchImpl(TOKEN_PAGE,{signal:AbortSignal.timeout(20000)});
+ if(!response.ok)throw Error("No se puede consultar la página de FFCV: HTTP "+response.status);
+ const html=await response.text();
+ // Token de página suministrado por FFCV para sus consultas Ajax.
+ const meta=html.match(/<meta\s+name=["']ffcv-pt["']\s+content=["']([a-f0-9]{64})["']/i);
+ if(!meta)throw Error("La portada FFCV no incluye el token esperado");
+ return meta[1];
+}
+
 export function urlForRound(n){
  if(!Number.isInteger(n)||n<1||n>9)throw Error("Jornada fuera de rango");
  return ENDPOINT+"?"+new URLSearchParams({...SETTINGS,cod_jornada:String(n)});
@@ -77,12 +88,13 @@ export function answersFromHar(har){
  }
  return answers;
 }
-export async function fetchRound(n,fetchImpl=fetch){
+export async function fetchRound(n,fetchImpl=fetch,token){
  const u=urlForRound(n);
  for(let attempt=1;attempt<=3;attempt++){
    try{
-     const response=await fetchImpl(u,{headers:{Accept:"application/json",Referer:"https://ffcv.es/competiciones/"},
-       signal:AbortSignal.timeout(20000)});
+     const headers={Accept:"application/json",Referer:TOKEN_PAGE,"X-Requested-With":"XMLHttpRequest"};
+     if(token)headers["X-FFCV-Page-Token"]=token;
+     const response=await fetchImpl(u,{headers,signal:AbortSignal.timeout(20000)});
      if(!response.ok)throw Error("HTTP "+response.status);
      const body=await response.text();
      if(body.length>1000000)throw Error("Respuesta excesiva");
@@ -95,7 +107,8 @@ export async function fetchRound(n,fetchImpl=fetch){
 }
 export async function sync({fetcher=fetchRound,dryRun=true,output=DEST,delay=1200,now=new Date()}={}){
  const base=JSON.parse(await readFile(DEST,"utf8")),answers=new Map();
- for(let n=1;n<=9;n++){answers.set(n,await fetcher(n));if(delay&&n<9)await pause(delay)}
+ const token=fetcher===fetchRound?await getPageToken():null;
+ for(let n=1;n<=9;n++){answers.set(n,await fetcher(n,fetch,token));if(delay&&n<9)await pause(delay)}
  const next=buildLeague(base,answers,now);
  if(!dryRun){
    const temp=output+".tmp";

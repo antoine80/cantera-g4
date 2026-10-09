@@ -54,5 +54,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Una petición con el token de página normal de FFCV
-        run: node scripts/probe_live.mjs
+      - name: Diagnóstico nueve jornadas FFCV (sin modificar datos)
+        run: node scripts/sync_ffcv.mjs --dry-run
