@@ -1,0 +1,167 @@
+{
+  "season": "2026-2027",
+  "competition": "Segona FFCV Benjamí 1r. any Alacant",
+  "phase": "F.C.",
+  "group": "4",
+  "seasonCode": "22",
+  "competitionCode": "905432332",
+  "groupCode": "905432336",
+  "expectedRounds": 9,
+  "source": "FFCV - respuesta JSON de su web oficial y capturas",
+  "sourceUrl": "https://ffcv.es/competiciones/#partidos",
+  "syncStatus": "har_partial",
+  "updatedAt": null,
+  "importedRounds": [
+    1
+  ],
+  "teams": [
+    {
+      "id": "betis",
+      "name": "C.D. Betis Florida 'C'",
+      "ffcvId": "907287061"
+    },
+    {
+      "id": "valle",
+      "name": "C.D. Col. El Valle 'B'",
+      "ffcvId": "30531715"
+    },
+    {
+      "id": "jesuitas",
+      "name": "C.D. Jesuitas Serra Grossa 'C'",
+      "ffcvId": "905959124"
+    },
+    {
+      "id": "arena",
+      "name": "C.F. Arena Alicante 'B'",
+      "ffcvId": "17722"
+    },
+    {
+      "id": "monnegre",
+      "name": "C.F. Monnegre de Mutxamel 'B'",
+      "ffcvId": "24981"
+    },
+    {
+      "id": "racing",
+      "name": "C.F. Racing Akra de Alicante 'C'",
+      "ffcvId": "907386469"
+    },
+    {
+      "id": "hercules",
+      "name": "Hércules C.F. S.A.D. 'D'",
+      "ffcvId": "30603312"
+    },
+    {
+      "id": "carolinas",
+      "name": "S.C.D. Carolinas 'B'",
+      "ffcvId": "25041"
+    },
+    {
+      "id": "tombola",
+      "name": "Tómbola A.C. 'B'",
+      "ffcvId": "27544109"
+    }
+  ],
+  "matches": [
+    {
+      "round": 1,
+      "date": "2026-10-17",
+      "time": "09:00",
+      "home": "racing",
+      "away": "monnegre",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled",
+      "venue": "Campo Mpal. Via Parque F-8 Campo 1",
+      "actaId": "26558956"
+    },
+    {
+      "round": 1,
+      "date": "2026-10-17",
+      "time": "12:15",
+      "home": "jesuitas",
+      "away": "betis",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled",
+      "venue": "Estadio Inmaculada F-8 Campo 1",
+      "actaId": "26558955"
+    },
+    {
+      "round": 1,
+      "date": "2026-10-18",
+      "time": "09:00",
+      "home": "valle",
+      "away": "arena",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled",
+      "venue": "Campo Mpal. Cabo Las Huertas F-8 Campo 1",
+      "actaId": "26558954"
+    },
+    {
+      "round": 1,
+      "date": "2026-10-18",
+      "time": "13:00",
+      "home": "carolinas",
+      "away": "tombola",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled",
+      "venue": "Polideportivo Mpal. Pla Garbinet F-8 Campo 1",
+      "actaId": "26558957"
+    },
+    {
+      "round": 9,
+      "date": "2026-12-19",
+      "time": "09:00",
+      "home": "betis",
+      "away": "racing",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled"
+    },
+    {
+      "round": 9,
+      "date": "2026-12-19",
+      "time": "10:15",
+      "home": "monnegre",
+      "away": "carolinas",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled"
+    },
+    {
+      "round": 9,
+      "date": "2026-12-19",
+      "time": "11:00",
+      "home": "tombola",
+      "away": "hercules",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled"
+    },
+    {
+      "round": 9,
+      "date": "2026-12-19",
+      "time": "12:00",
+      "home": "arena",
+      "away": "jesuitas",
+      "homeScore": null,
+      "awayScore": null,
+      "status": "scheduled"
+    }
+  ],
+  "byes": [
+    {
+      "round": 1,
+      "team": "hercules",
+      "date": "2026-10-18"
+    },
+    {
+      "round": 9,
+      "team": "valle",
+      "date": "2026-12-19",
+      "source": "captura"
+    }
+  ]
+}

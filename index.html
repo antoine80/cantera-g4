@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102b49"><meta name="description" content="Calendario, resultados y clasificación del fútbol base de Alicante.">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+<title>Cantera G4 · Fútbol base Alicante</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182a42;background:#f3f6fb;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,select{font:inherit}button{cursor:pointer}a{color:inherit}
+header{background:#0d2744;color:white;padding:19px max(18px,calc((100vw - 1050px)/2));display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:25px;font-weight:850;letter-spacing:-1px}.brand b{color:#69d2ab}header small{font-size:12px;color:#b8cde0;font-weight:600;letter-spacing:.08em}
+.hero{background:linear-gradient(125deg,#123559,#0b2441);color:white;padding:48px 18px 35px}
+.hero>div{max-width:1050px;margin:auto}.eyebrow{color:#6dddaf;letter-spacing:.12em;font-weight:800;font-size:12px}
+h1{font-size:clamp(32px,5vw,58px);letter-spacing:-.05em;line-height:1.03;margin:14px 0 17px}
+h1 em{font-style:normal;color:#78dcaf}.hero p{color:#cfdeeb;font-size:15px}
+.source{margin-top:26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}.pill{padding:7px 12px;border-radius:100px;background:#514729;color:#fff1aa;font-size:12px;font-weight:700}.pill.ok{background:#174a39;color:#b3f8cf}.source a{color:#c9e5ee;font-size:13px}
+main{max-width:1050px;margin:auto;padding:26px 18px 100px}
+.notice{background:#fff5e6;color:#6d4618;border:1px solid #f0d4a1;border-radius:13px;padding:13px 17px;font-size:13px;line-height:1.6;margin-bottom:19px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:30px}
+.metric{border:1px solid #e4ebf2;background:white;border-radius:17px;padding:20px}
+.metric strong{display:block;font-size:32px;color:#13395b;letter-spacing:-.05em}.metric span{font-size:11px;font-weight:800;letter-spacing:.08em;color:#7b8a9c}
+.head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}
+.head h2{font-size:25px;letter-spacing:-.04em;margin:4px 0}.sub{font-size:11px;color:#8090a4;font-weight:800;letter-spacing:.1em}
+.ghost{background:white;border:1px solid #dce5ed;border-radius:10px;padding:10px 12px;color:#235273;font-size:13px;font-weight:700}
+.tabs{display:flex;gap:7px;overflow:auto;border-bottom:1px solid #dae3ec;margin-bottom:20px;scrollbar-width:none}
+.tabs button{white-space:nowrap;padding:13px 17px;border:0;background:transparent;color:#718296;font-weight:750;border-bottom:3px solid transparent}
+.tabs button.active{color:#0b4c7c;border-bottom-color:#0b70b5}
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.controls label{font-size:11px;color:#7c8c9c;font-weight:800;display:flex;flex-direction:column;gap:7px}
+select{background:white;border:1px solid #d9e2ec;border-radius:10px;padding:11px;min-width:190px;color:#163c5d;max-width:100%}
+.roundhead{display:flex;align-items:center;justify-content:space-between;color:#29445e;font-size:12px;font-weight:850;letter-spacing:.06em;margin:27px 0 10px}
+.roundhead small{font-size:11px;color:#8997a7;letter-spacing:0}
+.fixtures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.match,.team{background:#fff;border:1px solid #e1e8ef;border-radius:15px;box-shadow:0 3px 10px #12325106}
+.match{overflow:hidden}.matchtop{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#f8fafc;font-size:12px;color:#64798c}
+.tag{font-size:10px;color:#658196;font-weight:800;white-space:nowrap}
+.matchbody{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:18px 14px;text-align:center}
+.side{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;align-items:center;font-size:12px}.side strong{font-weight:750;line-height:1.35}
+.crest{background:#eaf1fa;border:1px solid #d7e4ef;border-radius:13px;width:39px;height:39px;display:grid;place-items:center;color:#235c83;font-size:12px;font-weight:850}
+.score{min-width:75px;font-size:19px;font-weight:900;color:#103653}.score.timed{font-size:16px;color:#68849a}
+.venue{border-top:1px solid #edf0f4;padding:11px 16px;font-size:11px;color:#7890a3}
+.rest{padding:18px;font-size:13px;color:#526e85}.rest strong{color:#173b5c}
+.tablewrap{overflow:auto;border-radius:14px;border:1px solid #e0e6ee;background:white}
+table{width:100%;border-collapse:collapse;min-width:650px;font-size:13px}
+th{background:#eaf1f8;color:#56718c;text-align:left;font-size:11px}
+th,td{padding:13px 12px;border-bottom:1px solid #eef2f6}td strong{color:#0a4979}
+.explain{font-size:13px;color:#698095;margin:0 0 14px;line-height:1.5}
+.teams{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.team{padding:15px;display:flex;align-items:center;gap:12px}.team .label{flex:1;font-size:13px;font-weight:720}.team small{display:block;font-weight:400;color:#8396a8;margin-top:5px}.favorite{border:0;background:#f1f5fa;border-radius:11px;font-size:24px;color:#92a1b2;padding:6px 12px}.favorite.active{color:#e6a325}
+.empty{background:white;border:1px dashed #d0dfea;border-radius:15px;padding:32px;text-align:center;color:#6d8096}.empty strong{color:#193b58}
+footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top:42px}.bottom{display:none}
+@media(max-width:650px){.hero{padding-top:35px}.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:26px}.metric span{font-size:9px}.fixtures,.teams{grid-template-columns:1fr}.head h2{font-size:22px}.controls label{flex:1}select{width:100%;min-width:0}.bottom{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:4;background:#fff;border-top:1px solid #dfebf5;box-shadow:0 -5px 25px #20395011;padding:9px 10px calc(8px + env(safe-area-inset-bottom));justify-content:space-around}.bottom button{border:0;background:transparent;font-size:11px;color:#638098;display:grid;gap:5px;justify-items:center}.bottom button span{font-size:21px}.bottom button.active{color:#126da8;font-weight:800}.tabs{display:none}main{padding-bottom:150px}}
+</style></head>
+<body>
+<header><div class="brand">C<b>·</b> cantera</div><small>FÚTBOL BASE ALICANTE</small></header>
+<section class="hero"><div><div class="eyebrow">FÚTBOL 8 · BENJAMÍN 1.er AÑO</div><h1>La liga, <em>más cerca.</em></h1><p>Segona FFCV Benjamí · Alicante · Fase clasificatoria · Grupo 4</p><div class="source"><span class="pill" id="source">Cargando…</span><a href="https://ffcv.es/competiciones/#partidos" rel="noopener noreferrer" target="_blank">Consultar FFCV ↗</a></div></div></section>
+<main><div class="notice" id="notice">Cargando los datos...</div><section class="metrics" id="metrics" aria-label="Resumen"></section>
+<div class="head"><div><div class="sub">TEMPORADA 2026–2027</div><h2 id="heading">Jornadas y partidos</h2></div><button class="ghost" id="refresh">↻ Actualizar</button></div>
+<div class="tabs" id="tabs"><button data-view="partidos" class="active">Partidos</button><button data-view="clasificacion">Clasificación</button><button data-view="equipos">Equipos</button><button data-view="favoritos">Favoritos</button></div>
+<div class="controls"><label id="roundbox">JORNADA<select id="round"></select></label><label id="teambox">EQUIPO<select id="team"><option value="">Todos los equipos</option></select></label></div>
+<div id="content" aria-live="polite"></div>
+<footer>Proyecto independiente, no afiliado a FFCV. Los datos están sujetos a las condiciones de la federación.<div id="updated">Sin sincronización confirmada</div></footer></main>
+<nav class="bottom"><button data-view="partidos" class="active"><span>⚽</span>Partidos</button><button data-view="clasificacion"><span>▤</span>Tabla</button><button data-view="equipos"><span>♟</span>Equipos</button><button data-view="favoritos"><span>☆</span>Favoritos</button></nav>
+<script>
+"use strict";
+var state={data:null,view:"partidos",round:"all",team:"",favorites:[]};
+try{state.favorites=JSON.parse(localStorage.getItem("cantera-g4-favorites")||"[]")}catch(e){state.favorites=[]}
+function el(id){return document.getElementById(id)}
+function safe(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function team(id){return state.data.teams.find(function(t){return t.id===id})}
+function name(id){return team(id)?team(id).name:"Equipo"}
+function when(date){if(!date)return "Fecha por confirmar";var d=new Date(date+"T12:00:00");return isNaN(d.getTime())?date:d.toLocaleDateString("es-ES",{day:"numeric",month:"long",weekday:"long"})}
+function crest(t){return '<span class="crest" aria-hidden="true">'+safe(t.name.replace(/[^A-Za-zÁÉÍÓÚÜÑ]/g,"").slice(0,2).toUpperCase())+"</span>"}
+function finished(m){return m.status==="finished"&&Number.isInteger(m.homeScore)&&Number.isInteger(m.awayScore)}
+function empty(title,detail){return '<div class="empty"><strong>'+safe(title)+'</strong><p>'+safe(detail)+'</p></div>'}
+function standings(){var rows=state.data.teams.map(function(t){return {id:t.id,name:t.name,PJ:0,PG:0,PE:0,PP:0,GF:0,GC:0,PTS:0}});var map=new Map(rows.map(function(x){return [x.id,x]}));
+state.data.matches.forEach(function(m){if(!finished(m))return;var a=map.get(m.home),b=map.get(m.away);if(!a||!b)return;a.PJ++;b.PJ++;a.GF+=m.homeScore;a.GC+=m.awayScore;b.GF+=m.awayScore;b.GC+=m.homeScore;if(m.homeScore>m.awayScore){a.PG++;b.PP++;a.PTS+=3}else if(m.homeScore<m.awayScore){b.PG++;a.PP++;b.PTS+=3}else{a.PE++;b.PE++;a.PTS++;b.PTS++}});
+return rows.sort(function(a,b){return b.PTS-a.PTS-(b.GF-b.GC)+(a.GF-a.GC)||b.GF-a.GF||a.name.localeCompare(b.name,"es")})}
+function fixtures(){var all=state.data.matches.filter(function(m){return (state.round==="all"||String(m.round)===state.round)&&(!state.team||m.home===state.team||m.away===state.team)});
+var byes=(state.data.byes||[]).filter(function(b){return (state.round==="all"||String(b.round)===state.round)&&(!state.team||b.team===state.team)});
+if(!all.length&&!byes.length)return empty("Jornada pendiente de importar","Este calendario aún no está disponible en los datos verificados.");
+var rounds=[...new Set(all.map(function(m){return m.round}).concat(byes.map(function(b){return b.round})))].sort(function(a,b){return a-b});
+return rounds.map(function(r){var matches=all.filter(function(m){return m.round===r}).sort(function(a,b){return a.date.localeCompare(b.date)||(a.time||"").localeCompare(b.time||"")});
+var cards=matches.map(function(m){var a=team(m.home),b=team(m.away);if(!a||!b)return "";var done=finished(m);var status=done?"FINALIZADO":m.status==="postponed"?"APLAZADO":m.status==="unverified"?"REVISAR":"PROGRAMADO";
+return '<article class="match"><div class="matchtop"><span>'+safe(when(m.date))+'</span><span class="tag">'+status+'</span></div><div class="matchbody"><div class="side">'+crest(a)+"<strong>"+safe(a.name)+'</strong></div><div class="score '+(done?"":"timed")+'">'+(done?m.homeScore+" – "+m.awayScore:safe(m.time||"—"))+'</div><div class="side">'+crest(b)+"<strong>"+safe(b.name)+'</strong></div></div>'+(m.venue?'<div class="venue">📍 '+safe(m.venue)+"</div>":"")+"</article>"}).join("");
+cards+=byes.filter(function(b){return b.round===r}).map(function(b){return '<article class="match rest"><strong>Descansa</strong><div>'+safe(name(b.team))+"</div></article>"}).join("");
+var verified=(state.data.importedRounds||[]).includes(r);
+return '<div class="roundhead"><span>JORNADA '+r+'</span><small>'+(verified?"Datos JSON FFCV":"Datos parciales")+'</small></div><div class="fixtures">'+cards+"</div>"}).join("")}
+function classification(){var official=Array.isArray(state.data.officialStandings)&&state.data.officialStandings.length>0;var rows=official?state.data.officialStandings:standings();var notice='<p class="explain">'+(official?"Clasificación oficial de FFCV.":"Clasificación provisional calculada a partir de los marcadores finales disponibles. No incluye sanciones ni ajustes federativos.")+"</p>";
+return notice+'<div class="tablewrap"><table><thead><tr><th>POS</th><th>EQUIPO</th><th>PTS</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th></tr></thead><tbody>'+rows.map(function(r,i){return "<tr><td>"+(i+1)+"</td><td>"+safe(r.name||name(r.id))+"</td><td><strong>"+r.PTS+"</strong></td><td>"+r.PJ+"</td><td>"+r.PG+"</td><td>"+r.PE+"</td><td>"+r.PP+"</td><td>"+r.GF+"</td><td>"+r.GC+"</td></tr>"}).join("")+"</tbody></table></div>"}
+function teams(onlyFav){var list=state.data.teams.filter(function(t){return (!onlyFav||state.favorites.includes(t.id))&&(!state.team||t.id===state.team)});if(!list.length)return empty(onlyFav?"Todavía no hay favoritos":"Ningún equipo","En Equipos puedes pulsar la estrella para guardar tus favoritos.");
+return '<div class="teams">'+list.map(function(t){var active=state.favorites.includes(t.id);return '<article class="team">'+crest(t)+'<div class="label">'+safe(t.name)+'<small>'+state.data.matches.filter(function(m){return m.home===t.id||m.away===t.id}).length+' partidos disponibles</small></div><button class="favorite '+(active?"active":"")+'" data-fav="'+safe(t.id)+'" aria-label="Favorito de '+safe(t.name)+'">'+(active?"★":"☆")+"</button></article>"}).join("")+"</div>"}
+function render(){if(!state.data)return;var d=state.data;el("metrics").innerHTML='<div class="metric"><strong>'+d.teams.length+'</strong><span>EQUIPOS</span></div><div class="metric"><strong>'+(d.importedRounds||[]).length+'/'+d.expectedRounds+'</strong><span>JORNADAS IMPORTADAS</span></div><div class="metric"><strong>'+d.matches.filter(finished).length+'</strong><span>PARTIDOS FINALIZADOS</span></div>';
+document.querySelectorAll("[data-view]").forEach(function(b){b.classList.toggle("active",b.dataset.view===state.view)});el("heading").textContent={partidos:"Jornadas y partidos",clasificacion:"Clasificación",equipos:"Equipos del grupo",favoritos:"Mis favoritos"}[state.view];el("roundbox").style.display=state.view==="partidos"?"flex":"none";el("teambox").style.display=state.view==="clasificacion"?"none":"flex";
+el("content").innerHTML=state.view==="partidos"?fixtures():state.view==="clasificacion"?classification():teams(state.view==="favoritos");
+document.querySelectorAll("[data-fav]").forEach(function(b){b.addEventListener("click",function(){var id=b.dataset.fav;state.favorites=state.favorites.includes(id)?state.favorites.filter(function(x){return x!==id}):state.favorites.concat([id]);try{localStorage.setItem("cantera-g4-favorites",JSON.stringify(state.favorites))}catch(e){}render()})})}
+function setData(d){if(!d||d.groupCode!=="905432336"||d.competitionCode!=="905432332"||d.season!=="2026-2027"||!Array.isArray(d.teams)||d.teams.length!==9||!Array.isArray(d.matches))throw Error("Datos incompatibles con el grupo 4");
+state.data=d;el("round").innerHTML='<option value="all">Todas las jornadas</option>'+Array.from({length:9},function(_,i){return i+1}).map(function(n){return '<option value="'+n+'">Jornada '+n+((d.importedRounds||[]).includes(n)?" ✓":"")+"</option>"}).join("");el("round").value=state.round;
+el("team").innerHTML='<option value="">Todos los equipos</option>'+d.teams.map(function(t){return '<option value="'+safe(t.id)+'">'+safe(t.name)+"</option>"}).join("");el("team").value=state.team;
+var done=d.syncStatus==="verified";el("source").textContent=done?"Sincronización completa":(d.importedRounds||[]).length+"/9 jornadas verificadas";el("source").className=done?"pill ok":"pill";el("notice").textContent=done?"Datos sincronizados. Consulta siempre la federación para confirmar cambios de última hora.":"Datos parciales: J1 procede de una respuesta JSON de FFCV y J9 de capturas. J2–J8 pendientes de importar. La sincronización automática aún no está activada.";el("notice").style.display=done?"none":"block";el("updated").textContent=d.updatedAt?"Última actualización: "+new Date(d.updatedAt).toLocaleString("es-ES"):"Actualización automática pendiente";render()}
+async function load(){try{var response=await fetch("./data/league.json?v="+Date.now(),{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);setData(await response.json())}catch(e){el("notice").style.display="block";el("notice").textContent="No se pudo cargar el calendario: "+e.message;el("content").innerHTML=empty("No hay datos disponibles","Inténtalo de nuevo más tarde.")}}
+document.querySelectorAll("[data-view]").forEach(function(b){b.addEventListener("click",function(){state.view=b.dataset.view;render()})});el("round").addEventListener("change",function(e){state.round=e.target.value;render()});el("team").addEventListener("change",function(e){state.team=e.target.value;render()});el("refresh").addEventListener("click",load);
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("./sw.js").catch(function(){});load();
+</script></body></html>
