@@ -26,3 +26,7 @@ El proyecto incluye un control **Cargar calendario privado** que admite un JSON 
 ## Diagnóstico de conectividad FFCV (9 octubre 2026)
 
 La consulta de prueba desde el runner de GitHub Actions al endpoint público de jornada 1 devolvió **HTTP 403**. En Chrome, una captura HAR del usuario sí recogió JSON con las nueve jornadas. La causa exacta del rechazo no está confirmada. Por eso **no debe activarse `FFCV_SYNC_ENABLED` en GitHub Actions**: las consultas fallarán y los datos no se actualizarán. La importación desde un JSON local sigue siendo la alternativa para la PWA pública. Cuando el proyecto se traslade a un servidor privado accesible por VPN, se podrá comprobar allí la conectividad y las condiciones de uso de FFCV antes de programar sincronizaciones. Los procesos no deben intentar sortear el rechazo del servidor.
+
+## Importación local de HAR sin convertir a JSON
+
+En la web pulsar **Importar HAR / JSON privado** y elegir un HAR de Chrome (con las respuestas). La primera importación debe contener las nueve jornadas; posteriormente se puede exportar solamente la jornada nueva y fusionarla con las anteriores. Solo se extraen los datos de resultados del grupo 4, sin almacenar cookies, peticiones ajenas ni contenido del HAR original. El resultado queda en `localStorage` del navegador. **No es una actualización automática**: desde GitHub Actions la API FFCV devuelve HTTP 403 (registro del 9/10/2026). No activar la variable FFCV_SYNC_ENABLED mientras esto no esté resuelto por una fuente autorizada.

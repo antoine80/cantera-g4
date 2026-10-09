@@ -33,10 +33,11 @@ jobs:
         run: node scripts/sync_ffcv.mjs --write
       - name: Preparar sitio público
         run: |
-          mkdir -p dist/data dist/icons
+          mkdir -p dist/data dist/icons dist/client
           cp index.html sw.js manifest.webmanifest dist/
           cp data/league.json dist/data/
           cp icons/icon.svg dist/icons/
+          cp client/har-import.js dist/client/
           touch dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
