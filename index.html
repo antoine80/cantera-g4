@@ -5,14 +5,14 @@
 <title>Cantera G4 · Fútbol base Alicante</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#182a42;background:#f3f6fb;font-synthesis:none}
-*{box-sizing:border-box}body{margin:0}button,select{font:inherit}button{cursor:pointer}a{color:inherit}
+*{box-sizing:border-box}body{margin:0}#importTools{scroll-margin-top:30px}button,select{font:inherit}button{cursor:pointer}a{color:inherit}
 header{background:#0d2744;color:white;padding:19px max(18px,calc((100vw - 1050px)/2));display:flex;align-items:center;justify-content:space-between}
 .brand{font-size:25px;font-weight:850;letter-spacing:-1px}.brand b{color:#69d2ab}header small{font-size:12px;color:#b8cde0;font-weight:600;letter-spacing:.08em}
 .hero{background:linear-gradient(125deg,#123559,#0b2441);color:white;padding:48px 18px 35px}
 .hero>div{max-width:1050px;margin:auto}.eyebrow{color:#6dddaf;letter-spacing:.12em;font-weight:800;font-size:12px}
 h1{font-size:clamp(32px,5vw,58px);letter-spacing:-.05em;line-height:1.03;margin:14px 0 17px}
 h1 em{font-style:normal;color:#78dcaf}.hero p{color:#cfdeeb;font-size:15px}
-.source{margin-top:26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}.pill{padding:7px 12px;border-radius:100px;background:#514729;color:#fff1aa;font-size:12px;font-weight:700}.pill.ok{background:#174a39;color:#b3f8cf}.source a{color:#c9e5ee;font-size:13px}
+.source{margin-top:26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}.pill{padding:7px 12px;border-radius:100px;background:#514729;color:#fff1aa;font-size:12px;font-weight:700}.pill.ok{background:#174a39;color:#b3f8cf}.source a{color:#c9e5ee;font-size:13px}.source .import-shortcut{display:inline-block;background:#e1fff3;color:#123a31;text-decoration:none;font-size:13px;padding:10px 14px;border-radius:10px;font-weight:850}
 main{max-width:1050px;margin:auto;padding:26px 18px 100px}
 .notice{background:#fff5e6;color:#6d4618;border:1px solid #f0d4a1;border-radius:13px;padding:13px 17px;font-size:13px;line-height:1.6;margin-bottom:19px}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:30px}
@@ -51,10 +51,10 @@ footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top
 </style></head>
 <body>
 <header><div class="brand">C<b>·</b> cantera</div><small>FÚTBOL BASE ALICANTE</small></header>
-<section class="hero"><div><div class="eyebrow">FÚTBOL 8 · BENJAMÍN 1.er AÑO</div><h1>La liga, <em>más cerca.</em></h1><p>Segona FFCV Benjamí · Alicante · Fase clasificatoria · Grupo 4</p><div class="source"><span class="pill" id="source">Cargando…</span><a href="https://ffcv.es/competiciones/#partidos" rel="noopener noreferrer" target="_blank">Consultar FFCV ↗</a></div></div></section>
+<section class="hero"><div><div class="eyebrow">FÚTBOL 8 · BENJAMÍN 1.er AÑO</div><h1>La liga, <em>más cerca.</em></h1><p>Segona FFCV Benjamí · Alicante · Fase clasificatoria · Grupo 4</p><div class="source"><span class="pill" id="source">Cargando…</span><a href="https://ffcv.es/competiciones/#partidos" rel="noopener noreferrer" target="_blank">Consultar FFCV ↗</a><a class="import-shortcut" href="#importTools">📁 Cargar calendario privado ↓</a></div></div></section>
 <main><div class="notice" id="notice">Cargando los datos...</div><section class="metrics" id="metrics" aria-label="Resumen"></section>
 <div class="head"><div><div class="sub">TEMPORADA 2026–2027</div><h2 id="heading">Jornadas y partidos</h2></div><button class="ghost" id="refresh">↻ Actualizar</button></div>
-<div class="controls" id="importTools"><button class="ghost" id="importLocal" type="button">📁 Cargar calendario privado</button><button class="ghost" id="clearLocal" type="button" hidden>Eliminar copia local</button><input id="fileLocal" type="file" accept=".json,application/json" hidden aria-label="Archivo JSON con calendario"/></div>
+<div class="controls" id="importTools"><button class="ghost" style="color:white;background:#12659a;border-color:#12659a" id="importLocal" type="button">📁 Cargar calendario privado</button><button class="ghost" id="clearLocal" type="button" hidden>Eliminar copia local</button><input id="fileLocal" type="file" accept=".json,application/json" hidden aria-label="Archivo JSON con calendario"/></div>
 <div class="tabs" id="tabs"><button data-view="partidos" class="active">Partidos</button><button data-view="clasificacion">Clasificación</button><button data-view="equipos">Equipos</button><button data-view="favoritos">Favoritos</button></div>
 <div class="controls"><label id="roundbox">JORNADA<select id="round"></select></label><label id="teambox">EQUIPO<select id="team"><option value="">Todos los equipos</option></select></label></div>
 <div id="content" aria-live="polite"></div>
@@ -107,5 +107,5 @@ el("importLocal").addEventListener("click",function(){el("fileLocal").click()});
 el("fileLocal").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{if(f.size>250000)throw Error("Archivo demasiado grande");var data=JSON.parse(await f.text());validatePrivate(data);localStorage.setItem(PRIVATE_KEY,JSON.stringify(data));setData(data)}catch(err){alert("No se pudo importar: "+err.message)}finally{e.target.value=""}});
 el("clearLocal").addEventListener("click",function(){try{localStorage.removeItem(PRIVATE_KEY)}catch(e){}load()});
 document.querySelectorAll("[data-view]").forEach(function(b){b.addEventListener("click",function(){state.view=b.dataset.view;render()})});el("round").addEventListener("change",function(e){state.round=e.target.value;render()});el("team").addEventListener("change",function(e){state.team=e.target.value;render()});el("refresh").addEventListener("click",load);
-if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("./sw.js").catch(function(){});load();
+if("serviceWorker" in navigator&&location.protocol==="https:"){var swReloaded=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(!swReloaded){swReloaded=true;location.reload()}});navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).then(function(r){return r.update()}).catch(function(){})}load();
 </script></body></html>
