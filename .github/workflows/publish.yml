@@ -4,7 +4,10 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    - cron: "20 6 * * *"
+    # Días laborables: mañana y tarde (horarios UTC).
+    - cron: "20 7,17 * * 1-5"
+    # Sábados y domingos: cinco actualizaciones durante el día.
+    - cron: "20 7,10,13,16,19 * * 6,0"
 permissions:
   contents: read
   pages: write
@@ -14,8 +17,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publicar:
-    if: github.event_name != 'schedule' || vars.FFCV_SYNC_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     environment:
       name: github-pages
     steps:
@@ -23,14 +26,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Validar sincronizador y datos sin conexión a FFCV
+      - name: Verificar código y pruebas
         run: |
           node --check scripts/sync_ffcv.mjs
           node --check client/har-import.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
-      - name: Sincronizar las nueve jornadas
-        if: vars.FFCV_SYNC_ENABLED == 'true'
+      - name: Descargar y validar las nueve jornadas desde FFCV
         run: node scripts/sync_ffcv.mjs --write
       - name: Preparar sitio público
         run: |
@@ -46,13 +48,3 @@ jobs:
           path: dist
       - name: Publicar en GitHub Pages
         uses: actions/deploy-pages@v4
-  diagnostico_portada_ffcv:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Diagnóstico nueve jornadas FFCV (sin modificar datos)
-        run: node scripts/sync_ffcv.mjs --dry-run

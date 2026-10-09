@@ -1,32 +1,37 @@
-# Cantera G4
+# Cantera G4 — Fútbol base Alicante
 
-PWA de fútbol base: Benjamín 1.º año, Segona FFCV Alicante, F.C. grupo 4, temporada 2026-2027.
+Web instalable (PWA) para **Segona FFCV Benjamí 1r. any Alacant · F.C. Grup 4 · Temporada 2026–2027**.
 
-## Publicación
-En Settings → Pages → Build and deployment, seleccionar **GitHub Actions**. En Actions → Publicar Cantera G4, ejecutar **Run workflow** si no se ejecuta automáticamente.
+- Web: https://antoine80.github.io/cantera-g4/
+- Datos: `data/league.json`, generados directamente en el despliegue.
+- Sin base de datos, servidor propio, Python, contraseñas ni cifrado.
+- **El sitio en GitHub Pages es público.** No incluyas datos personales, cookies ni HAR en el repositorio.
 
-Dirección prevista: https://antoine80.github.io/cantera-g4/
+## Cómo se actualiza
 
-## Datos y sincronización
-Jornada 1 procedente de la respuesta JSON oficial aportada; jornada 9 parcial de capturas; jornadas 2 a 8 pendientes.
-La clasificación local es provisional. No se interpreta un resultado sin disputar como 0-0.
+El flujo `.github/workflows/publish.yml` obtiene un token temporal de la propia página pública de competiciones de FFCV y consulta las nueve jornadas en su API mediante la cabecera `X-FFCV-Page-Token`. Esta petición ha sido comprobada desde GitHub Actions, con **nueve jornadas, 36 encuentros y nueve descansos**.
 
-La sincronización automática está desactivada por defecto. Antes de activarla, comprobar acceso al servidor y condiciones para reutilizar los datos FFCV. Para activarla, crear variable de repositorio **FFCV_SYNC_ENABLED=true** en Settings → Secrets and variables → Actions → Variables. La tarea consulta nueve jornadas, valida 36 encuentros y nueve descansos y evita publicar datos incompletos.
+El token se usa solo durante la sincronización, y **nunca se guarda en archivos o registros**. El importador verifica los códigos de temporada, competición y grupo, la fecha y los nueve participantes en cada jornada. Un fallo detiene el despliegue: se conserva la versión anterior de GitHub Pages.
 
-No se incluye el HAR original ni cookies, tokens o información personal de menores. Proyecto independiente, no afiliado a FFCV.
+Los datos nuevos se guardan solamente en el artefacto publicado de GitHub Pages. **No se generan commits de resultados** en el repositorio. No existe base de datos.
 
-## Verificación sin Python ni conexiones externas
+### Frecuencia
 
-En cada cambio de la rama main, GitHub Actions ejecuta `node --test tests/*.test.mjs` antes de publicar. Son pruebas sin peticiones a FFCV, utilizando una muestra JSON de la jornada 1 **sin HAR, cookies ni tokens**. La web sigue mostrando datos parciales hasta completar la importación real. El sincronizador se ejecuta sin escritura con `node scripts/sync_ffcv.mjs` o con escritura explícita `node scripts/sync_ffcv.mjs --write`. La variable FFCV_SYNC_ENABLED sigue desactivada hasta confirmar el derecho de acceso automatizado y la correspondencia de estados finales.
+- Lunes a viernes: **07:20 y 17:20 UTC**.
+- Sábados y domingos: **07:20, 10:20, 13:20, 16:20 y 19:20 UTC**.
 
-## Importación privada desde un HAR (sin publicar datos en GitHub)
+GitHub puede retrasar ejecuciones programadas. Para forzar una actualización: [Actions → Publicar Cantera G4 → Run workflow](https://github.com/antoine80/cantera-g4/actions/workflows/publish.yml).
 
-El proyecto incluye un control **Cargar calendario privado** que admite un JSON previamente depurado. El archivo se queda exclusivamente en el almacenamiento local del navegador (`localStorage`) y no se envía a GitHub ni a FFCV. El botón **Eliminar copia local** revierte a los datos públicos. La importación no equivale a actualización automática; el JSON representa la fecha de la captura y puede quedar desactualizado. La caché del sitio continúa siendo pública pero **no incluye** el calendario privado.
+Los resultados se actualizan según lo que FFCV haya publicado en el momento de la consulta, no necesariamente en tiempo real. La clasificación mostrada es **provisional**, calculada con resultados conocidos, y puede no incluir ajustes oficiales.
 
-## Diagnóstico de conectividad FFCV (9 octubre 2026)
+### Lectura en navegador
 
-La consulta de prueba desde el runner de GitHub Actions al endpoint público de jornada 1 devolvió **HTTP 403**. En Chrome, una captura HAR del usuario sí recogió JSON con las nueve jornadas. La causa exacta del rechazo no está confirmada. Por eso **no debe activarse `FFCV_SYNC_ENABLED` en GitHub Actions**: las consultas fallarán y los datos no se actualizarán. La importación desde un JSON local sigue siendo la alternativa para la PWA pública. Cuando el proyecto se traslade a un servidor privado accesible por VPN, se podrá comprobar allí la conectividad y las condiciones de uso de FFCV antes de programar sincronizaciones. Los procesos no deben intentar sortear el rechazo del servidor.
+Al abrir o pulsar **Actualizar**, la web descarga la última versión de `data/league.json`. Cuando el JSON remoto tenga fecha posterior al HAR importado localmente, se descarta esa copia anterior. Siguen disponibles los favoritos almacenados localmente.
 
-## Importación local de HAR sin convertir a JSON
+## Importación HAR (opcional)
 
-En la web pulsar **Importar HAR / JSON privado** y elegir un HAR de Chrome (con las respuestas). La primera importación debe contener las nueve jornadas; posteriormente se puede exportar solamente la jornada nueva y fusionarla con las anteriores. Solo se extraen los datos de resultados del grupo 4, sin almacenar cookies, peticiones ajenas ni contenido del HAR original. El resultado queda en `localStorage` del navegador. **No es una actualización automática**: desde GitHub Actions la API FFCV devuelve HTTP 403 (registro del 9/10/2026). No activar la variable FFCV_SYNC_ENABLED mientras esto no esté resuelto por una fuente autorizada.
+El botón **Importar HAR / JSON privado** es únicamente una alternativa manual si FFCV deja de ser accesible. Los HAR se leen en el navegador, no se envían a GitHub. No se debe publicar el HAR.
+
+## Avisos y condiciones
+
+Proyecto independiente, sin afiliación con FFCV. El usuario debe comprobar las condiciones de acceso y redistribución de los datos federativos antes de seguir ofreciendo una web pública. La ejecución programada puede requerir cambios si la Federación modifica su servicio.
