@@ -46,36 +46,13 @@ jobs:
           path: dist
       - name: Publicar en GitHub Pages
         uses: actions/deploy-pages@v4
-
   diagnostico_portada_ffcv:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verificar acceso web público FFCV sin consultar API
-        run: |
-          node --input-type=module -e '
-            const u="https://ffcv.es/competiciones/";
-            try{
-              const res=await fetch(u,{signal:AbortSignal.timeout(12000)});
-              console.log("GET portada FFCV: HTTP",res.status);
-              if(res.ok){
-                const body=await res.text();
-                console.log("HTML recibido:",body.length,"caracteres");
-                console.log("Referencia a cabecera de página:",body.includes("x-ffcv-page-token"));
-                console.log("Referencia a token:",/page[-_]?token|pageToken/i.test(body));
-                const p=body.indexOf("opts.headers=Object.assign");
-                if(p>=0){
-                  const sample=body.slice(Math.max(0,p-1000),p+100);
-                  console.log("Bootstrap sin token:",sample.replace(/[0-9a-f]{32,}/gi,"[REDACTED]"));
-                }
-                for(const m of body.matchAll(/page[-_]?token|pageToken/gi)){
-                  let clip=body.slice(Math.max(0,m.index-90),Math.min(body.length,m.index+180));
-                  clip=clip.replace(/[0-9a-f]{40,}/gi,"[REDACTED]");
-                  console.log("HTML token surroundings:",clip.slice(0,260));
-                }
-              }
-            }catch(e){console.log("GET portada no disponible:",e.message);process.exitCode=1}
-          '
+      - name: Una petición con el token de página normal de FFCV
+        run: node scripts/probe_live.mjs
