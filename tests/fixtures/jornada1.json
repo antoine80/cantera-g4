@@ -1,0 +1,66 @@
+{
+  "grupo": "",
+  "jornada": "1",
+  "partidos": [
+    {
+      "fecha": "18/10/2026",
+      "hora": "09:00",
+      "local": "C.D. Col. El Valle 'B'",
+      "visitante": "C.F. Arena Alicante 'B'",
+      "cod_equipo_local": "30531715",
+      "cod_equipo_visitante": "17722",
+      "resultado": "0",
+      "campo": "Campo Mpal. Cabo Las Huertas F-8 Campo 1",
+      "codacta": "26558954",
+      "estado": "0"
+    },
+    {
+      "fecha": "17/10/2026",
+      "hora": "12:15",
+      "local": "C.D. Jesuitas Serra Grossa 'C'",
+      "visitante": "C.D. Betis Florida 'C'",
+      "cod_equipo_local": "905959124",
+      "cod_equipo_visitante": "907287061",
+      "resultado": "0",
+      "campo": "Estadio Inmaculada F-8 Campo 1",
+      "codacta": "26558955",
+      "estado": "0"
+    },
+    {
+      "fecha": "17/10/2026",
+      "hora": "09:00",
+      "local": "C.F. Racing Akra de Alicante 'C'",
+      "visitante": "C.F. Monnegre de Mutxamel 'B'",
+      "cod_equipo_local": "907386469",
+      "cod_equipo_visitante": "24981",
+      "resultado": "0",
+      "campo": "Campo Mpal. Via Parque F-8 Campo 1",
+      "codacta": "26558956",
+      "estado": "0"
+    },
+    {
+      "fecha": "18/10/2026",
+      "hora": "13:00",
+      "local": "S.C.D. Carolinas 'B'",
+      "visitante": "Tómbola A.C. 'B'",
+      "cod_equipo_local": "25041",
+      "cod_equipo_visitante": "27544109",
+      "resultado": "0",
+      "campo": "Polideportivo Mpal. Pla Garbinet F-8 Campo 1",
+      "codacta": "26558957",
+      "estado": "0"
+    },
+    {
+      "fecha": "18/10/2026",
+      "hora": "",
+      "local": "Descansa",
+      "visitante": "Hércules C.F. S.A.D. 'D'",
+      "cod_equipo_local": "-1",
+      "cod_equipo_visitante": "30603312",
+      "resultado": "0",
+      "campo": "",
+      "codacta": "26558958",
+      "estado": "0"
+    }
+  ]
+}

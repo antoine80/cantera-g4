@@ -73,7 +73,7 @@ function finished(m){return m.status==="finished"&&Number.isInteger(m.homeScore)
 function empty(title,detail){return '<div class="empty"><strong>'+safe(title)+'</strong><p>'+safe(detail)+'</p></div>'}
 function standings(){var rows=state.data.teams.map(function(t){return {id:t.id,name:t.name,PJ:0,PG:0,PE:0,PP:0,GF:0,GC:0,PTS:0}});var map=new Map(rows.map(function(x){return [x.id,x]}));
 state.data.matches.forEach(function(m){if(!finished(m))return;var a=map.get(m.home),b=map.get(m.away);if(!a||!b)return;a.PJ++;b.PJ++;a.GF+=m.homeScore;a.GC+=m.awayScore;b.GF+=m.awayScore;b.GC+=m.homeScore;if(m.homeScore>m.awayScore){a.PG++;b.PP++;a.PTS+=3}else if(m.homeScore<m.awayScore){b.PG++;a.PP++;b.PTS+=3}else{a.PE++;b.PE++;a.PTS++;b.PTS++}});
-return rows.sort(function(a,b){return b.PTS-a.PTS-(b.GF-b.GC)+(a.GF-a.GC)||b.GF-a.GF||a.name.localeCompare(b.name,"es")})}
+return rows.sort(function(a,b){return b.PTS-a.PTS||((b.GF-b.GC)-(a.GF-a.GC))||b.GF-a.GF||a.name.localeCompare(b.name,"es")})}
 function fixtures(){var all=state.data.matches.filter(function(m){return (state.round==="all"||String(m.round)===state.round)&&(!state.team||m.home===state.team||m.away===state.team)});
 var byes=(state.data.byes||[]).filter(function(b){return (state.round==="all"||String(b.round)===state.round)&&(!state.team||b.team===state.team)});
 if(!all.length&&!byes.length)return empty("Jornada pendiente de importar","Este calendario aún no está disponible en los datos verificados.");

@@ -1,6 +1,12 @@
-const CACHE="cantera-g4-v1",SHELL=["./","./index.html","./manifest.webmanifest","./icons/icon.svg"];
-self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting()});
-self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
-self.addEventListener("fetch",event=>{const req=event.request;if(req.method!=="GET"||new URL(req.url).origin!==self.location.origin)return;
-if(new URL(req.url).pathname.endsWith("/data/league.json")){event.respondWith(fetch(req).then(async res=>{if(res.ok){let cache=await caches.open(CACHE);await cache.put("./data/league.json",res.clone())}return res}).catch(()=>caches.match("./data/league.json").then(r=>r||new Response("{}",{status:503}))));return}
-event.respondWith(caches.match(req).then(c=>c||fetch(req)))});
+const CACHE="cantera-g4-v2",FILES=["./","./index.html","./manifest.webmanifest","./icons/icon.svg"];
+self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting()});
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
+self.addEventListener("fetch",e=>{
+ const req=e.request,u=new URL(req.url);if(req.method!=="GET"||u.origin!==location.origin)return;
+ if(u.pathname.endsWith("/data/league.json")||req.mode==="navigate"){
+  e.respondWith(fetch(req).then(async res=>{if(res.ok){const cache=await caches.open(CACHE);await cache.put(req,res.clone())}return res})
+   .catch(async()=>await caches.match(req)||await caches.match("./index.html")||new Response("Sin conexión",{status:503})));
+  return;
+ }
+ e.respondWith(caches.match(req).then(cached=>cached||fetch(req)));
+});

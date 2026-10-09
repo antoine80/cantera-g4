@@ -23,11 +23,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verificar sintaxis del sincronizador
-        run: node --check scripts/sync_ffcv.mjs
+      - name: Validar sincronizador y datos sin conexión a FFCV
+        run: |
+          node --check scripts/sync_ffcv.mjs
+          node --test tests/*.test.mjs
       - name: Sincronizar las nueve jornadas
         if: vars.FFCV_SYNC_ENABLED == 'true'
-        run: node scripts/sync_ffcv.mjs
+        run: node scripts/sync_ffcv.mjs --write
       - name: Preparar sitio público
         run: |
           mkdir -p dist/data dist/icons
