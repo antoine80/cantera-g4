@@ -47,3 +47,25 @@ jobs:
       - name: Publicar en GitHub Pages
         uses: actions/deploy-pages@v4
 
+  diagnostico_portada_ffcv:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar acceso web público FFCV sin consultar API
+        run: |
+          node --input-type=module -e '
+            const u="https://ffcv.es/competiciones/";
+            try{
+              const res=await fetch(u,{signal:AbortSignal.timeout(12000)});
+              console.log("GET portada FFCV: HTTP",res.status);
+              if(res.ok){
+                const body=await res.text();
+                console.log("HTML recibido:",body.length,"caracteres");
+                console.log("Referencia a cabecera de página:",body.includes("x-ffcv-page-token"));
+                console.log("Referencia a token:",/page[-_]?token|pageToken/i.test(body));
+              }
+            }catch(e){console.log("GET portada no disponible:",e.message);process.exitCode=1}
+          '
