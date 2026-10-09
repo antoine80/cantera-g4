@@ -66,6 +66,11 @@ jobs:
                 console.log("HTML recibido:",body.length,"caracteres");
                 console.log("Referencia a cabecera de página:",body.includes("x-ffcv-page-token"));
                 console.log("Referencia a token:",/page[-_]?token|pageToken/i.test(body));
+                for(const m of body.matchAll(/page[-_]?token|pageToken/gi)){
+                  let clip=body.slice(Math.max(0,m.index-90),Math.min(body.length,m.index+180));
+                  clip=clip.replace(/[0-9a-f]{40,}/gi,"[REDACTED]");
+                  console.log("HTML token surroundings:",clip.slice(0,260));
+                }
               }
             }catch(e){console.log("GET portada no disponible:",e.message);process.exitCode=1}
           '
