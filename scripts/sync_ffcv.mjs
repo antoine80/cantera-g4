@@ -174,6 +174,13 @@ export async function sync({fetcher=fetchRound,dryRun=true,output=DEST,delay=120
    }catch(error){console.warn("Clasificación oficial no disponible; se usará tabla provisional:",error.message)}
  }
  const next=buildLeague(base,answers,now,officialRaw);
+ // Diagnóstico legible en GitHub Actions para detectar cambios de fecha u hora.
+ for(let n=1;n<=9;n++){
+   const games=next.matches.filter(m=>m.round===n);
+   const detail=games.map(m=>m.date+" "+(m.time||"--:--")).join(" | ");
+   console.log("Fechas FFCV J"+n+": "+detail);
+ }
+
  if(!dryRun){
    const temp=output+".tmp";
    await writeFile(temp,JSON.stringify(next,null,2)+"\n","utf8");
