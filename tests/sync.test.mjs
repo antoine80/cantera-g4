@@ -124,3 +124,48 @@ test("La API de clasificación incluye token y código del grupo correcto",async
  assert.equal(url.searchParams.get("cod_jornada"),"9");
  assert.equal(headers["X-FFCV-Page-Token"],"a".repeat(64));
 });
+
+test("Un club nuevo se incorpora a todos los datos, con una jornada de cinco partidos",()=>{
+ const extra={name:"C.D. El Campello 'D'",id:"905432999"};
+ const baseRound=structuredClone(sample);
+ // Jornada 4 incluye un nuevo partido: el descanso del Hércules pasa a partido ante El Campello.
+ const dynamic=structuredClone(baseRound);
+ dynamic.jornada="4";
+ const desc=dynamic.partidos.find(p=>String(p.cod_equipo_local)==="-1"||String(p.cod_equipo_visitante)==="-1");
+ assert(desc);
+ const hercules=String(desc.cod_equipo_local)==="-1"?desc.cod_equipo_visitante:desc.cod_equipo_local;
+ dynamic.partidos=dynamic.partidos.filter(p=>p!==desc);
+ dynamic.partidos.push({...dynamic.partidos[0],local:"Hércules C.F. S.A.D. 'D'",visitante:extra.name,
+   cod_equipo_local:hercules,cod_equipo_visitante:extra.id,codacta:"99990001"});
+ const rounds=new Map(Array.from({length:9},(_,i)=>[i+1,{...structuredClone(sample),jornada:String(i+1)}]));
+ rounds.set(4,dynamic);
+ const result=buildLeague(base,rounds,new Date("2026-10-13T00:00:00Z"));
+ assert.equal(result.teams.length,10);
+ assert.equal(result.matches.length,37);
+ assert.equal(result.byes.length,8);
+ const campello=result.teams.find(t=>t.ffcvId===extra.id);
+ assert.equal(campello.name,extra.name);
+ assert.equal(campello.id,"ffcv-"+extra.id);
+ const game=result.matches.find(m=>m.round===4&&m.away===campello.id);
+ assert(game);
+ assert.equal(game.home,"hercules");
+ assert.equal(result.matches.filter(m=>m.round===4).length,5);
+});
+test("La clasificación oficial acepta diez equipos cuando la competición crece",()=>{
+ const extra={id:"ffcv-905432999",name:"C.D. El Campello 'D'",ffcvId:"905432999"};
+ const all=[...base.teams,extra];
+ const input={codigo_grupo:"905432336",codigo_competicion:"905432332",jornada:"4",
+ clasificacion:all.map((t,i)=>({codequipo:t.ffcvId,posicion:i+1,puntos:"0",
+ jugados:"0",ganados:"0",empatados:"0",perdidos:"0",goles_a_favor:"0",goles_en_contra:"0"}))};
+ const parsed=parseOfficial(input,all);
+ assert.equal(parsed.rows.length,10);
+ assert.equal(parsed.rows[9].id,extra.id);
+ assert.throws(()=>parseOfficial({...input,clasificacion:input.clasificacion.slice(0,9)},all),/incompleta/);
+});
+test("Un partido duplicado sigue rechazándose aunque haya diez equipos",()=>{
+ const round=structuredClone(sample);
+ round.partidos[1].cod_equipo_local=round.partidos[0].cod_equipo_local;
+ const rounds=new Map(Array.from({length:9},(_,i)=>[i+1,{...structuredClone(sample),jornada:String(i+1)}]));
+ rounds.set(2,{...round,jornada:"2"});
+ assert.throws(()=>buildLeague(base,rounds),/duplicados/);
+});

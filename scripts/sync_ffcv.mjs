@@ -35,7 +35,7 @@ export function crestUrl(value){
 export function parseOfficial(raw,baseTeams){
  if(!raw||String(raw.codigo_grupo)!==SETTINGS.cod_grupo||
     String(raw.codigo_competicion)!==SETTINGS.cod_competicion||
-    !Array.isArray(raw.clasificacion)||raw.clasificacion.length!==9)throw Error("Clasificación oficial ajena o incompleta");
+    !Array.isArray(raw.clasificacion)||raw.clasificacion.length!==baseTeams.length)throw Error("Clasificación oficial ajena o incompleta");
  const codes=new Map(baseTeams.map(t=>[String(t.ffcvId),t]));
  const ranks=new Set(),used=new Set();
  function integer(v,label,allowNegative=false){
@@ -45,7 +45,7 @@ export function parseOfficial(raw,baseTeams){
  }
  const rows=raw.clasificacion.map(p=>{
    const id=String(p.codequipo),team=codes.get(id),rank=integer(p.posicion,"posición");
-   if(!team||rank<1||rank>9||ranks.has(rank)||used.has(id))throw Error("Equipo o posición incorrectos en clasificación oficial");
+   if(!team||rank<1||rank>baseTeams.length||ranks.has(rank)||used.has(id))throw Error("Equipo o posición incorrectos en clasificación oficial");
    used.add(id);ranks.add(rank);
    return {id:team.id,name:team.name,rank,
      PTS:integer(p.puntos,"puntos",true),PJ:integer(p.jugados,"PJ"),
@@ -81,7 +81,8 @@ export function parseDate(input){
  return m[3]+"-"+m[2]+"-"+m[1];
 }
 export function parseRound(raw,n,teams){
- if(!raw||String(raw.jornada)!==String(n)||!Array.isArray(raw.partidos)||raw.partidos.length!==5)
+ if(!raw||String(raw.jornada)!==String(n)||!Array.isArray(raw.partidos)||
+    raw.partidos.length<4||raw.partidos.length>9)
    throw Error("Estructura incompatible en J"+n);
  const matches=[],byes=[],used=[],crests=[];
  for(const p of raw.partidos){
@@ -107,22 +108,57 @@ export function parseRound(raw,n,teams){
      venue:String(p.campo??"").trim(),actaId:String(p.codacta??""),
      sourceState,sourceResult});
  }
- if(matches.length!==4||byes.length!==1||used.length!==9||new Set(used).size!==9)
+ if(matches.length<4||matches.length>8||byes.length>1||
+    (matches.length===4&&byes.length===0)||
+    used.length!==matches.length*2+byes.length||
+    new Set(used).size!==used.length)
    throw Error("Participantes incompletos o duplicados en J"+n);
  return {matches:matches.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||"").localeCompare(b.time||"")),byes,crests};
 }
+
+export function discoverTeams(base,answers){
+ // El grupo puede incorporar equipos después de haber publicado las primeras jornadas.
+ // Usamos el código federativo real; jamás inferimos un equipo solo por su nombre.
+ const byCode=new Map(base.teams.map(t=>[String(t.ffcvId),t]));
+ if(byCode.size!==base.teams.length)throw Error("Códigos de equipos duplicados en datos base");
+ const missing=new Map();
+ for(let n=1;n<=9;n++){
+   const raw=answers.get(n);
+   if(!raw||String(raw.jornada)!==String(n)||!Array.isArray(raw.partidos))
+     throw Error("Respuesta de jornada incompatible en J"+n);
+   for(const p of raw.partidos){
+     for(const [codeRaw,nameRaw] of [[p.cod_equipo_local,p.local],[p.cod_equipo_visitante,p.visitante]]){
+       const code=String(codeRaw??"");
+       if(code==="-1")continue;
+       if(!/^\d{2,12}$/.test(code))throw Error("Código de equipo inválido en J"+n);
+       const name=String(nameRaw??"").trim().replace(/\s+/g," ");
+       if(!name||name.length>120||name.toLowerCase()==="descansa")
+         throw Error("Nombre de equipo inválido en J"+n);
+       if(!byCode.has(code)&&!missing.has(code)){
+         missing.set(code,{id:"ffcv-"+code,name,ffcvId:code});
+       }
+     }
+   }
+ }
+ const teams=[...base.teams,...missing.values()];
+ if(teams.length<9||teams.length>16||new Set(teams.map(t=>t.id)).size!==teams.length)
+   throw Error("Cantidad de equipos inesperada: "+teams.length);
+ return teams;
+}
+
 export function buildLeague(base,answers,now=new Date(),officialRaw=null){
- if(base.season!=="2026-2027"||base.competitionCode!==SETTINGS.cod_competicion||base.groupCode!==SETTINGS.cod_grupo||base.teams.length!==9)
+ if(base.season!=="2026-2027"||base.competitionCode!==SETTINGS.cod_competicion||base.groupCode!==SETTINGS.cod_grupo||!Array.isArray(base.teams)||base.teams.length<9)
    throw Error("Competición incorrecta");
- const teams=new Map(base.teams.map(t=>[String(t.ffcvId),t.id]));
- if(teams.size!==9||new Set(teams.values()).size!==9)throw Error("Nueve equipos distintos necesarios");
  if(!(answers instanceof Map)||answers.size!==9)throw Error("Se necesitan nueve jornadas completas");
+ const teamList=discoverTeams(base,answers);
+ const teams=new Map(teamList.map(t=>[String(t.ffcvId),t.id]));
+ if(teams.size!==teamList.length)throw Error("Códigos de equipo duplicados");
  const all=[];
  for(let n=1;n<=9;n++){if(!answers.has(n))throw Error("Falta jornada "+n);all.push(parseRound(answers.get(n),n,teams))}
- const official=officialRaw?parseOfficial(officialRaw,base.teams):null;
+ const official=officialRaw?parseOfficial(officialRaw,teamList):null;
  const images=new Map(all.flatMap(r=>r.crests.map(i=>[i.id,i.url])));
  if(official)for(const row of official.rows){if(row.crestUrl)images.set(row.id,row.crestUrl)}
- const enrichedTeams=base.teams.map(t=>({...t,crestUrl:images.get(t.id)||null}));
+ const enrichedTeams=teamList.map(t=>({...t,crestUrl:images.get(t.id)||t.crestUrl||null}));
  return {...base,teams:enrichedTeams,matches:all.flatMap(x=>x.matches),byes:all.flatMap(x=>x.byes),
    officialStandings:official?official.rows:[],officialStandingsRound:official?.round??null,
    importedRounds:[1,2,3,4,5,6,7,8,9],syncStatus:"verified",
@@ -168,7 +204,8 @@ export async function sync({fetcher=fetchRound,dryRun=true,output=DEST,delay=120
  if(fetcher===fetchRound){
    try{
      const raw=await fetchOfficialClassification(fetch,token);
-     const official=parseOfficial(raw,base.teams);
+     const currentTeams=discoverTeams(base,answers);
+     const official=parseOfficial(raw,currentTeams);
      officialRaw=raw;
      console.log("Clasificación oficial validada:",official.rows.length,"equipos, jornada",official.round??"desconocida");
    }catch(error){console.warn("Clasificación oficial no disponible; se usará tabla provisional:",error.message)}
@@ -195,7 +232,7 @@ async function main(){
  const write=args.includes("--write");
  console.log(write?"Sincronización con escritura":"Diagnóstico sin modificar archivos");
  const d=await sync({dryRun:!write});
- console.log("Validación completa:",d.importedRounds.length,"jornadas,",d.matches.length,"partidos,",d.byes.length,"descansos");
+ console.log("Validación completa:",d.importedRounds.length,"jornadas,",d.teams.length,"equipos,",d.matches.length,"partidos,",d.byes.length,"descansos");
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  main().catch(e=>{console.error("SIN CAMBIOS:",e.message);process.exitCode=1});
