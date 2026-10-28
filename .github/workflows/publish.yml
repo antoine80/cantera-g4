@@ -34,6 +34,9 @@ jobs:
           node --check client/venues.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
+      - name: Diagnosticar origen de rechazo HTTP 403 (solo en push)
+        if: github.event_name == 'push'
+        run: node scripts/diagnose_access.mjs
       - name: Actualizar FFCV o conservar última versión verificada
         run: node scripts/safe_publish.mjs
       - name: Preparar sitio público
