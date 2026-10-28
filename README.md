@@ -51,3 +51,7 @@ Los escudos proceden de los campos `url_img`, `escudo_local` y `escudo_visitante
 ## Cambios de equipos durante la temporada
 
 El grupo puede crecer de 9 a 10 o más equipos. La sincronización ya no presupone nueve participantes en todas las jornadas: identifica códigos federativos no vistos antes, incorpora el nombre y el escudo proporcionados por FFCV, y valida 4 a 8 partidos y como máximo un descanso por jornada. Los equipos nuevos aparecen en resultados, filtros y clasificación oficial. La clasificación se valida contra la plantilla de equipos descubierta en la misma sincronización. No se publican jornadas con participantes duplicados ni se inventan partidos.
+
+## Seguridad de publicación ante errores FFCV (octubre 2026)
+
+El proveedor devuelve HTTP 403 de forma continuada desde el 17/10/2026 en GitHub Actions. El nuevo publicador `scripts/safe_publish.mjs` recupera la última versión completa de GitHub Pages, verifica grupo, jornada, nueve jornadas y participantes, e intenta la sincronización. Si falla, conserva esa versión anterior y publica `data/sync-status.json` con estado **stale** y la hora de la última actualización válida. No publica el JSON parcial del repositorio por error. Si no existe respaldo verificable, cancela el despliegue sin alterar la web. La PWA señala datos desactualizados cuando se produce un error o cuando la última sincronización supera 36 horas. Esto no recupera por sí solo resultados nuevos mientras FFCV deniegue el acceso; no se intentan eludir bloqueos de FFCV.

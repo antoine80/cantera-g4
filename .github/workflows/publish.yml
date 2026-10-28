@@ -29,17 +29,18 @@ jobs:
       - name: Verificar código y pruebas
         run: |
           node --check scripts/sync_ffcv.mjs
+          node --check scripts/safe_publish.mjs
           node --check client/har-import.js
           node --check client/venues.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
-      - name: Descargar y validar las nueve jornadas desde FFCV
-        run: node scripts/sync_ffcv.mjs --write
+      - name: Actualizar FFCV o conservar última versión verificada
+        run: node scripts/safe_publish.mjs
       - name: Preparar sitio público
         run: |
           mkdir -p dist/data dist/icons dist/client
           cp index.html sw.js manifest.webmanifest dist/
-          cp data/league.json dist/data/
+          cp data/league.json data/sync-status.json dist/data/
           cp icons/icon.svg dist/icons/
           cp client/*.js dist/client/
           touch dist/.nojekyll

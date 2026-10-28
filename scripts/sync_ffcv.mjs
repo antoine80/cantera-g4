@@ -186,12 +186,16 @@ export async function fetchRound(n,fetchImpl=fetch,token){
      const headers={Accept:"application/json",Referer:TOKEN_PAGE,"X-Requested-With":"XMLHttpRequest"};
      if(token)headers["X-FFCV-Page-Token"]=token;
      const response=await fetchImpl(u,{headers,signal:AbortSignal.timeout(20000)});
-     if(!response.ok)throw Error("HTTP "+response.status);
+     if(!response.ok){
+       const error=new Error("HTTP "+response.status);
+       if(response.status===401||response.status===403||response.status===404)error.fatal=true;
+       throw error;
+     }
      const body=await response.text();
      if(body.length>1000000)throw Error("Respuesta excesiva");
      return JSON.parse(body.replace(/^\uFEFF/,""));
    }catch(error){
-     if(attempt===3)throw Error("Jornada "+n+": "+error.message,{cause:error});
+     if(error.fatal||attempt===3)throw Error("Jornada "+n+": "+error.message,{cause:error});
      await pause(attempt*1200);
    }
  }
