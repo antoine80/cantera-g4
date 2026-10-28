@@ -24,10 +24,12 @@ try{
  const token=html.match(/<meta\s+name=["']ffcv-pt["']\s+content=["']([a-f0-9]{64})["']/i)?.[1];
  console.log("Token de página presente:",Boolean(token));
  if(!token)process.exit(0);
- const reply=await fetch(url,{headers:{
-  "Accept":"application/json","Referer":base,"X-Requested-With":"XMLHttpRequest",
-  "X-FFCV-Page-Token":token
- },signal:AbortSignal.timeout(15000)});
+ const parts=(page.headers.getSetCookie?.()||[]).map(v=>v.split(";")[0].trim()).filter(v=>/^[a-zA-Z0-9_-]+=/.test(v));
+ console.log("Cookies de sesión emitidas:",parts.length);
+ const headers={"Accept":"application/json","Referer":base,
+  "X-Requested-With":"XMLHttpRequest","X-FFCV-Page-Token":token};
+ if(parts.length)headers.Cookie=parts.join("; ");
+ const reply=await fetch(url,{headers,signal:AbortSignal.timeout(15000)});
  summary("API FFCV",reply);
  if(!reply.ok){
   const body=(await reply.text()).slice(0,2000);
