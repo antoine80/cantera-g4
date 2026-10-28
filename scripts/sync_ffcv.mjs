@@ -11,14 +11,29 @@ export const SETTINGS=Object.freeze({
 const scoreRegex=/^(\d{1,2})\s*[-–]\s*(\d{1,2})$/;
 const pause=ms=>new Promise(ok=>setTimeout(ok,ms));
 const TOKEN_PAGE="https://ffcv.es/competiciones/";
-export async function getPageToken(fetchImpl=fetch){
+export async function getPageSession(fetchImpl=fetch){
  const response=await fetchImpl(TOKEN_PAGE,{signal:AbortSignal.timeout(20000)});
  if(!response.ok)throw Error("No se puede consultar la página de FFCV: HTTP "+response.status);
  const html=await response.text();
- // Token de página suministrado por FFCV para sus consultas Ajax.
+ // FFCV entrega un token de página y cookie(s) para la sesión HTTP en curso.
  const meta=html.match(/<meta\s+name=["']ffcv-pt["']\s+content=["']([a-f0-9]{64})["']/i);
  if(!meta)throw Error("La portada FFCV no incluye el token esperado");
- return meta[1];
+ // Solo reutilizar la cookie emitida por la misma respuesta oficial y el mismo origen.
+ // No registrar ni persistir estos valores. getSetCookie está disponible en Node 22.
+ const pairs=(response.headers?.getSetCookie?.()??[])
+  .map(v=>v.split(";")[0].trim())
+  .filter(v=>/^[a-zA-Z0-9_!#$%&'*+.^`|~-]+=[^;\r\n]+$/.test(v));
+ return {token:meta[1],cookie:pairs.join("; ")};
+}
+export async function getPageToken(fetchImpl=fetch){
+ return (await getPageSession(fetchImpl)).token;
+}
+function withPageSession(tokenOrSession){
+ const session=typeof tokenOrSession==="string"?{token:tokenOrSession}:tokenOrSession;
+ const headers={Accept:"application/json",Referer:TOKEN_PAGE,"X-Requested-With":"XMLHttpRequest"};
+ if(session?.token)headers["X-FFCV-Page-Token"]=session.token;
+ if(session?.cookie)headers.Cookie=session.cookie;
+ return headers;
 }
 
 
@@ -60,8 +75,7 @@ export async function fetchOfficialClassification(fetchImpl=fetch,token){
  const url=new URL("https://ffcv.es/competiciones/api/clasificaciones/clasificaciones_ajax.php");
  url.searchParams.set("cod_grupo",SETTINGS.cod_grupo);
  url.searchParams.set("cod_jornada","9");
- const headers={Accept:"application/json",Referer:TOKEN_PAGE,"X-Requested-With":"XMLHttpRequest"};
- if(token)headers["X-FFCV-Page-Token"]=token;
+ const headers=withPageSession(token);
  const response=await fetchImpl(url,{headers,signal:AbortSignal.timeout(20000)});
  if(!response.ok)throw Error("Clasificación FFCV: HTTP "+response.status);
  const text=await response.text();
@@ -183,8 +197,7 @@ export async function fetchRound(n,fetchImpl=fetch,token){
  const u=urlForRound(n);
  for(let attempt=1;attempt<=3;attempt++){
    try{
-     const headers={Accept:"application/json",Referer:TOKEN_PAGE,"X-Requested-With":"XMLHttpRequest"};
-     if(token)headers["X-FFCV-Page-Token"]=token;
+     const headers=withPageSession(token);
      const response=await fetchImpl(u,{headers,signal:AbortSignal.timeout(20000)});
      if(!response.ok){
        const error=new Error("HTTP "+response.status);
@@ -202,7 +215,7 @@ export async function fetchRound(n,fetchImpl=fetch,token){
 }
 export async function sync({fetcher=fetchRound,dryRun=true,output=DEST,delay=1200,now=new Date()}={}){
  const base=JSON.parse(await readFile(DEST,"utf8")),answers=new Map();
- const token=fetcher===fetchRound?await getPageToken():null;
+ const token=fetcher===fetchRound?await getPageSession():null;
  for(let n=1;n<=9;n++){answers.set(n,await fetcher(n,fetch,token));if(delay&&n<9)await pause(delay)}
  let officialRaw=null;
  if(fetcher===fetchRound){

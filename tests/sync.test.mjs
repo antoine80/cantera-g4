@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,fetchRound,crestUrl,parseOfficial,fetchOfficialClassification} from "../scripts/sync_ffcv.mjs";
+import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,getPageSession,fetchRound,crestUrl,parseOfficial,fetchOfficialClassification} from "../scripts/sync_ffcv.mjs";
 const base=JSON.parse(await readFile(new URL("../data/league.json",import.meta.url),"utf8"));
 const sample=JSON.parse(await readFile(new URL("./fixtures/jornada1.json",import.meta.url),"utf8"));
 const ids=new Map(base.teams.map(t=>[String(t.ffcvId),t.id]));
@@ -168,4 +168,44 @@ test("Un partido duplicado sigue rechazándose aunque haya diez equipos",()=>{
  const rounds=new Map(Array.from({length:9},(_,i)=>[i+1,{...structuredClone(sample),jornada:String(i+1)}]));
  rounds.set(2,{...round,jornada:"2"});
  assert.throws(()=>buildLeague(base,rounds),/duplicados/);
+});
+
+test("FFCV: token y cookie de sesión se recuperan de la misma portada",async()=>{
+ const token="a".repeat(64);
+ const fetchMock=async()=>({
+   ok:true,
+   text:async()=>'<html><meta name="ffcv-pt" content="'+token+'"></html>',
+   headers:{getSetCookie:()=>[
+     "PHPSESSID=prueba123; Path=/; Secure; HttpOnly",
+     "preferencia=claro; Path=/; SameSite=Lax"
+   ]}
+ });
+ assert.deepEqual(await getPageSession(fetchMock),{
+  token,cookie:"PHPSESSID=prueba123; preferencia=claro"
+ });
+ assert.equal(await getPageToken(fetchMock),token);
+});
+test("FFCV: partidos y clasificación envían la misma sesión HTTP",async()=>{
+ const session={token:"b".repeat(64),cookie:"PHPSESSID=same-session"};
+ const requests=[];
+ const fake=async(url,options)=>{
+   requests.push({url,headers:options.headers});
+   return {ok:true,text:async()=>JSON.stringify({jornada:"1",partidos:[]})};
+ };
+ await fetchRound(1,fake,session);
+ await fetchOfficialClassification(fake,session);
+ assert.equal(requests.length,2);
+ for(const q of requests){
+   assert.equal(q.headers.Cookie,session.cookie);
+   assert.equal(q.headers["X-FFCV-Page-Token"],session.token);
+ }
+});
+test("FFCV: sesión sin cookies conserva el protocolo anterior",async()=>{
+ let headers;
+ await fetchRound(1,async(_url,options)=>{
+   headers=options.headers;
+   return {ok:true,text:async()=>JSON.stringify({jornada:"1"})};
+ },{token:"c".repeat(64),cookie:""});
+ assert.equal(headers.Cookie,undefined);
+ assert.equal(headers["X-FFCV-Page-Token"],"c".repeat(64));
 });
