@@ -13,7 +13,7 @@ const pause=ms=>new Promise(ok=>setTimeout(ok,ms));
 const TOKEN_PAGE="https://ffcv.es/competiciones/";
 export async function getPageSession(fetchImpl=fetch){
  const response=await fetchImpl(TOKEN_PAGE,{signal:AbortSignal.timeout(20000)});
- if(!response.ok)throw Error("No se puede consultar la página de FFCV: HTTP "+response.status);
+ if(!response.ok)throw Object.assign(new Error("No se puede consultar la página de FFCV: HTTP "+response.status),{status:response.status});
  const html=await response.text();
  // FFCV entrega un token de página y cookie(s) para la sesión HTTP en curso.
  const meta=html.match(/<meta\s+name=["']ffcv-pt["']\s+content=["']([a-f0-9]{64})["']/i);
@@ -195,28 +195,65 @@ export function answersFromHar(har){
 }
 export async function fetchRound(n,fetchImpl=fetch,token){
  const u=urlForRound(n);
- for(let attempt=1;attempt<=3;attempt++){
+ for(let attempt=1;attempt<=2;attempt++){
    try{
      const headers=withPageSession(token);
      const response=await fetchImpl(u,{headers,signal:AbortSignal.timeout(20000)});
      if(!response.ok){
-       const error=new Error("HTTP "+response.status);
-       if(response.status===401||response.status===403||response.status===404)error.fatal=true;
+       const error=Object.assign(new Error("HTTP "+response.status),{status:response.status});
+       if(response.status===401||response.status===403||response.status===404||response.status===429)error.fatal=true;
        throw error;
      }
      const body=await response.text();
      if(body.length>1000000)throw Error("Respuesta excesiva");
      return JSON.parse(body.replace(/^\uFEFF/,""));
    }catch(error){
-     if(error.fatal||attempt===3)throw Error("Jornada "+n+": "+error.message,{cause:error});
-     await pause(attempt*1200);
+     if(error.fatal||attempt===2)throw Error("Jornada "+n+": "+error.message,{cause:error});
+     await pause(2500);
    }
  }
 }
+
+export function isTransientFFCV(error){
+ for(let e=error,i=0;e&&i<5;e=e.cause,i++){
+   if(e.fatal)return false;
+   const code=Number(e.status)||Number(/\\bHTTP\\s+(\\d{3})\\b/.exec(String(e.message||""))?.[1]);
+   if(code)return [408,500,502,503,504].includes(code);
+   if(["AbortError","TimeoutError","TypeError"].includes(e.name))return true;
+ }
+ return false;
+}
+export async function openFFCVSession(sessionFetcher=getPageSession,sleep=pause){
+ try{return await sessionFetcher()}
+ catch(e){
+   if(!isTransientFFCV(e))throw e;
+   console.warn("FFCV: error temporal al abrir sesión. Segundo intento tras una pausa.");
+   await sleep(3500);
+   return sessionFetcher();
+ }
+}
+export async function recoverFFCVRound(n,{fetcher=fetchRound,fetchImpl=fetch,session,sessionFetcher=getPageSession,sleep=pause}={}){
+ try{return {raw:await fetcher(n,fetchImpl,session),session}}
+ catch(e){
+   if(!isTransientFFCV(e))throw e;
+   console.warn("FFCV: incidencia temporal en jornada "+n+"; se renovará la sesión y se reintentará una vez.");
+   await sleep(4500);
+   const refreshed=await openFFCVSession(()=>sessionFetcher(fetchImpl),sleep);
+   return {raw:await fetcher(n,fetchImpl,refreshed),session:refreshed};
+ }
+}
+
 export async function sync({fetcher=fetchRound,dryRun=true,output=DEST,delay=1200,now=new Date()}={}){
  const base=JSON.parse(await readFile(DEST,"utf8")),answers=new Map();
- const token=fetcher===fetchRound?await getPageSession():null;
- for(let n=1;n<=9;n++){answers.set(n,await fetcher(n,fetch,token));if(delay&&n<9)await pause(delay)}
+ let token=fetcher===fetchRound?await openFFCVSession():null;
+ for(let n=1;n<=9;n++){
+   if(fetcher===fetchRound){
+     const step=await recoverFFCVRound(n,{session:token});
+     token=step.session;
+     answers.set(n,step.raw);
+   }else answers.set(n,await fetcher(n,fetch,token));
+   if(delay&&n<9)await pause(delay);
+ }
  let officialRaw=null;
  if(fetcher===fetchRound){
    try{

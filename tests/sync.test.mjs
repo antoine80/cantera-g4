@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,getPageSession,fetchRound,crestUrl,parseOfficial,fetchOfficialClassification} from "../scripts/sync_ffcv.mjs";
+import {urlForRound,parseDate,parseRound,buildLeague,answersFromHar,sync,getPageToken,getPageSession,fetchRound,crestUrl,parseOfficial,fetchOfficialClassification,isTransientFFCV,openFFCVSession,recoverFFCVRound} from "../scripts/sync_ffcv.mjs";
 const base=JSON.parse(await readFile(new URL("../data/league.json",import.meta.url),"utf8"));
 const sample=JSON.parse(await readFile(new URL("./fixtures/jornada1.json",import.meta.url),"utf8"));
 const ids=new Map(base.teams.map(t=>[String(t.ffcvId),t.id]));
@@ -208,4 +208,58 @@ test("FFCV: sesión sin cookies conserva el protocolo anterior",async()=>{
  },{token:"c".repeat(64),cookie:""});
  assert.equal(headers.Cookie,undefined);
  assert.equal(headers["X-FFCV-Page-Token"],"c".repeat(64));
+});
+
+test("Error temporal 503 con causa interna activa recuperación, no 403 ni 429",()=>{
+ const make=status=>new Error("Jornada 1: HTTP "+status,{cause:Object.assign(new Error("HTTP "+status),{status})});
+ assert.equal(isTransientFFCV(make(503)),true);
+ assert.equal(isTransientFFCV(make(502)),true);
+ assert.equal(isTransientFFCV(make(403)),false);
+ assert.equal(isTransientFFCV(make(429)),false);
+});
+test("Error 503 abre una sesión nueva y repite solo la jornada fallida",async()=>{
+ const seen=[],first={token:"viejo",cookie:"s=1"},next={token:"nuevo",cookie:"s=2"};
+ let renewals=0,pauses=0;
+ const result=await recoverFFCVRound(4,{
+   session:first,
+   fetcher:async(n,_fetch,s)=>{
+     seen.push([n,s.token]);
+     if(s.token==="viejo")throw new Error("Jornada 4: HTTP 503",{cause:Object.assign(new Error("HTTP 503"),{status:503})});
+     return {jornada:"4",partidos:[]};
+   },
+   sessionFetcher:async()=>{renewals++;return next},
+   sleep:async()=>{pauses++}
+ });
+ assert.deepEqual(seen,[[4,"viejo"],[4,"nuevo"]]);
+ assert.equal(renewals,1);
+ assert.equal(pauses,1);
+ assert.equal(result.session.cookie,"s=2");
+});
+test("Rechazo 403 no solicita otra sesión ni insiste",async()=>{
+ let refreshed=0;
+ await assert.rejects(recoverFFCVRound(1,{
+   session:{token:"a"},
+   fetcher:async()=>{throw Object.assign(new Error("HTTP 403"),{status:403,fatal:true})},
+   sessionFetcher:async()=>{refreshed++},
+   sleep:async()=>{}
+ }),/403/);
+ assert.equal(refreshed,0);
+});
+test("Al abrir una sesión, un 503 se reintenta una sola vez",async()=>{
+ let calls=0;
+ const session=await openFFCVSession(async()=>{
+   calls++;
+   if(calls===1)throw Object.assign(new Error("HTTP 503"),{status:503});
+   return {token:"correcto",cookie:"s=2"};
+ },async()=>{});
+ assert.equal(calls,2);
+ assert.equal(session.token,"correcto");
+});
+test("Una respuesta 429 se respeta y no se reintenta",async()=>{
+ let calls=0;
+ await assert.rejects(fetchRound(1,async()=>{
+   calls++;
+   return {ok:false,status:429}
+ },{token:"x"}),/429/);
+ assert.equal(calls,1);
 });

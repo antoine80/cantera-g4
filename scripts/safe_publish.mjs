@@ -73,6 +73,7 @@ export async function publish({fetcher=fetch,synchronizer=sync,now=new Date(),re
    const status=failState(error,now,baseline.updatedAt);
    await write(statusPath,JSON.stringify(status,null,2)+"\n");
    console.warn("SIN ACTUALIZAR:",status.errorCode,"último dato:",status.lastSuccessAt);
+   if(process.env.GITHUB_ACTIONS)console.warn("::warning title=FFCV no actualizado::"+status.errorCode+"; se conserva la versión del "+status.lastSuccessAt);
    return status;
  }
 }
