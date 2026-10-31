@@ -59,3 +59,17 @@ El proveedor devuelve HTTP 403 de forma continuada desde el 17/10/2026 en GitHub
 ## Sesión HTTP FFCV (28 octubre 2026)
 
 El diagnóstico verificó HTTP 200 en la portada y entrega de token más cookie de sesión; la API devolvía HTTP 403 al enviar únicamente el token y HTTP 503 al añadir la cookie recibida. El sincronizador usa ahora una **única sesión efímera de portada**, con token y cookies de ese origen, para consultas de partidos y clasificación. Los valores no se guardan ni se registran. Los errores HTTP 403 se detienen sin reintentos repetidos; los errores 503 conservan reintentos limitados y, si persisten, el publicador conserva la última copia válida y avisa de datos desactualizados. Esto no garantiza acceso si FFCV mantiene restricciones a las consultas automáticas; para una integración estable debe obtenerse una vía autorizada.
+
+## Botón «Actualizar FFCV» (administrador)
+
+El botón de la web usa el Worker de `worker/update.js`. Hasta desplegarlo, el botón solicita su URL y no ejecuta nada. No coloques tokens en `index.html`.
+
+1. Crea un Cloudflare Worker (Workers & Pages) y pega el contenido de `worker/update.js`. Despliégalo.
+2. En los secretos del Worker configura:
+   - `GITHUB_TOKEN`: token de GitHub con permiso **Actions: Read and write** únicamente para `antoine80/cantera-g4`. Usa un token fine-grained.
+   - `UPDATE_KEY`: contraseña aleatoria de **al menos 16 caracteres**, distinta del token de GitHub.
+3. Abre la web y pulsa **Actualizar FFCV**. Introduce la URL HTTPS del Worker terminada en `/update` (solo la primera vez) y la clave de administrador. La clave no se almacena en el navegador.
+4. El Worker crea una **ejecución nueva** mediante `workflow_dispatch`, evitando duplicar artefactos al repetir un job anterior. La respuesta 202 confirma únicamente que GitHub aceptó la petición: **no asegura que haya terminado la sincronización ni el despliegue**.
+5. Comprueba la nueva ejecución en https://github.com/antoine80/cantera-g4/actions y después pulsa **Recargar datos**.
+
+Limitaciones: GitHub Pages es una web pública y el botón es visible para todos, aunque la acción requiere clave. El Worker tiene CORS limitado al origen oficial; la autenticación real depende de `UPDATE_KEY`. Para producción, es recomendable añadir límites de peticiones y una solución de identidad (p. ej. Cloudflare Access) si hay varios administradores. Si cambias la URL del Worker, elimina la clave local `cantera-g4-worker-url` del almacenamiento del sitio.
