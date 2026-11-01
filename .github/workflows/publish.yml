@@ -33,6 +33,7 @@ jobs:
           node --check client/har-import.js
           node --check client/venues.js
           node --check client/predictions.js
+          node --check client/simulator.js
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
       - name: Actualizar FFCV o conservar última versión verificada
