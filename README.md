@@ -85,3 +85,7 @@ La sección de equipos incorpora fichas individuales con escudo, posición, punt
 ## Plantillas y actas oficiales FFCV
 
 Cada partido con identificador oficial `actaId` validado muestra un enlace a `https://ffcv.es/competiciones/partidos/partido.php?cod_partido=<ID>#plantillas`. Se abre la ficha de FFCV, donde el visitante puede consultar directamente las plantillas y el acta según la disponibilidad oficial. No importamos ni almacenamos nombres, imágenes, fechas de nacimiento u otros datos personales de futbolistas menores. La sección existe tanto en el calendario como en la ficha de cada equipo. Si FFCV cambia el identificador o requiere acceso, el enlace depende de su disponibilidad.
+
+## Plantillas privadas en el teléfono (noviembre 2026)
+
+El módulo `client/private-squads.mjs` implementa plantillas locales por equipo en **IndexedDB**, con campos dorsal, nombre y posición. Desde la ficha de cada equipo se pueden editar, guardar, borrar, importar y exportar copias JSON. Los datos personales no están dentro del repositorio ni del despliegue GitHub Pages; solo viven en el navegador/dispositivo del usuario. La copia exportada contiene nombres y debe custodiarse. Borrar datos del navegador o desinstalar la PWA puede eliminar el contenido, por lo que conviene hacer copia de seguridad. Este almacenamiento local no implica cifrado ni garantiza privacidad frente a otras personas con acceso al dispositivo. La importación desde FFCV no está conectada; no se usan cuentas, cookies ni capturas de terceros.

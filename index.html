@@ -72,9 +72,10 @@ footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top
 <script src="./client/venues.js"></script>
 <script src="./client/predictions.js"></script>
 <script src="./client/simulator.js"></script>
+<script type="module" src="./client/private-squads.mjs"></script>
 <script>
 "use strict";
-var state={data:null,view:"partidos",round:"all",team:"",favorites:[],simulation:{},profileTeam:null,previousView:"equipos"};
+var state={data:null,view:"partidos",round:"all",team:"",favorites:[],simulation:{},profileTeam:null,previousView:"equipos",privateSquad:[],privateSquadLoaded:false};
 try{state.favorites=JSON.parse(localStorage.getItem("cantera-g4-favorites")||"[]")}catch(e){state.favorites=[]}
 function el(id){return document.getElementById(id)}
 function safe(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
@@ -130,8 +131,16 @@ function teamProfileView(){
  var games=list.map(function(m){var rival=m.home===t.id?m.away:m.home,home=m.home===t.id;
    return '<article class="match" style="padding:15px"><div class="matchtop" style="margin:-15px -15px 13px"><span>Jornada '+m.round+' · '+safe(when(m.date))+'</span><span class="tag">'+(home?"LOCAL":"VISITANTE")+'</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><strong>'+safe(name(rival))+'</strong><strong>'+ (finished(m)?m.homeScore+' – '+m.awayScore:safe(m.time||"Pendiente"))+'</strong></div>'+(m.venue?'<p class="explain" style="margin:10px 0 0">📍 '+safe(m.venue)+'</p>':"")+matchSquadLink(m)+'</article>';
  }).join("");
- var source='<p class="explain">Estadísticas de la clasificación oficial FFCV cuando está disponible; de lo contrario, calculadas con los partidos finalizados. Las alineaciones y nombres de menores no se reproducen sin verificar la fuente y su autorización para reutilizarlos.</p>';
- return intro+scores+'<h3>Calendario y resultados</h3><div class="fixtures">'+games+'</div>'+source;
+ var playerRows=state.privateSquad.map(function(p){return '<div class="team" style="padding:10px"><strong style="min-width:32px">'+safe(p.number||"—")+'</strong><span style="flex:1">'+safe(p.name)+'</span><small>'+safe(p.position)+'</small></div>'}).join("");
+ var squad='<h3>Plantilla privada · Solo en este dispositivo</h3>'+
+ '<p class="explain">Los nombres se guardan únicamente en el almacenamiento de este navegador. No se publican ni se envían a GitHub.</p>'+
+ (state.privateSquadLoaded?(playerRows||empty("Sin jugadores guardados","Añade jugadores o importa una copia privada.")):'<p class="explain">Cargando plantilla privada…</p>')+
+ '<label class="sub" for="squadText">EDITOR DE PLANTILLA · DORSAL;NOMBRE;POSICIÓN</label>'+
+ '<textarea id="squadText" rows="5" style="display:block;width:100%;max-width:100%;padding:12px;margin:10px 0;border:1px solid #cfdae7;border-radius:12px" placeholder="1;Nombre;Portero&#10;7;Nombre;Delantero"></textarea>'+
+ '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="saveSquad" type="button">Guardar en mi móvil</button><button class="ghost" id="removeSquad" type="button">Eliminar plantilla</button><button class="ghost" id="exportSquads" type="button">Exportar copia</button><button class="ghost" id="importSquads" type="button">Importar copia JSON</button><input id="squadFile" hidden type="file" accept=".json,application/json"></div>'+
+ '<p id="squadMessage" role="status" aria-live="polite" class="explain" style="margin-top:10px"></p>';
+ var source='<p class="explain" style="margin-top:22px">Estadísticas de FFCV cuando están disponibles. La plantilla privada es una copia manual y no se sincroniza automáticamente desde la federación.</p>';
+ return intro+scores+squad+'<h3>Calendario y resultados</h3><div class="fixtures">'+games+'</div>'+source;
 }
 function simulatorView(){
  var d=state.data,focus=d.teams.find(function(t){return t.id==="betis"||/Betis Florida/i.test(t.name)});
@@ -161,8 +170,9 @@ function predictionsView(){
 function render(){if(!state.data)return;var d=state.data;el("metrics").innerHTML='<div class="metric"><strong>'+d.teams.length+'</strong><span>EQUIPOS</span></div><div class="metric"><strong>'+(d.importedRounds||[]).length+'/'+d.expectedRounds+'</strong><span>JORNADAS IMPORTADAS</span></div><div class="metric"><strong>'+d.matches.filter(finished).length+'</strong><span>PARTIDOS FINALIZADOS</span></div>';
 document.querySelectorAll("[data-view]").forEach(function(b){b.classList.toggle("active",b.dataset.view===state.view)});el("heading").textContent={partidos:"Jornadas y partidos",clasificacion:"Clasificación",equipos:"Equipos del grupo",favoritos:"Mis favoritos",pronosticos:"Pronósticos Betis Florida",simulador:"Simulador Betis Florida",perfil:"Ficha del equipo"}[state.view];el("roundbox").style.display=state.view==="partidos"?"flex":"none";el("teambox").style.display=(state.view==="clasificacion"||state.view==="pronosticos"||state.view==="simulador"||state.view==="perfil")?"none":"flex";
 el("content").innerHTML=state.view==="partidos"?fixtures():state.view==="clasificacion"?classification():state.view==="pronosticos"?predictionsView():state.view==="simulador"?simulatorView():state.view==="perfil"?teamProfileView():teams(state.view==="favoritos");
-document.querySelectorAll("[data-team-profile]").forEach(function(b){b.addEventListener("click",function(){state.previousView=state.view;state.profileTeam=b.dataset.teamProfile;state.view="perfil";render();document.getElementById("heading").scrollIntoView({block:"start",behavior:"smooth"})})});
+document.querySelectorAll("[data-team-profile]").forEach(function(b){b.addEventListener("click",function(){state.previousView=state.view;state.profileTeam=b.dataset.teamProfile;state.privateSquad=[];state.privateSquadLoaded=false;state.view="perfil";render();loadPrivateSquad(state.profileTeam);document.getElementById("heading").scrollIntoView({block:"start",behavior:"smooth"})})});
  var back=el("backTeams");if(back)back.addEventListener("click",function(){state.view=state.previousView||"equipos";state.profileTeam=null;render()});
+ if(state.view==="perfil")bindSquadControls();
  document.querySelectorAll("[data-sim]").forEach(function(input){input.addEventListener("change",function(){
  var key=input.getAttribute("data-sim"),side=input.getAttribute("data-side"),raw=input.value.trim();
  var current=state.simulation[key]||{home:null,away:null};
@@ -174,6 +184,59 @@ document.querySelectorAll("[data-team-profile]").forEach(function(b){b.addEventL
  var reset=el("resetSimulation");if(reset)reset.addEventListener("click",function(){state.simulation={};render()});
  document.querySelectorAll(".crest img").forEach(function(img){img.addEventListener("error",function(){img.remove()})});
 document.querySelectorAll("[data-fav]").forEach(function(b){b.addEventListener("click",function(){var id=b.dataset.fav;state.favorites=state.favorites.includes(id)?state.favorites.filter(function(x){return x!==id}):state.favorites.concat([id]);try{localStorage.setItem("cantera-g4-favorites",JSON.stringify(state.favorites))}catch(e){}render()})})}
+
+async function privateAPI(){
+ if(window.CanteraPrivateSquads)return window.CanteraPrivateSquads;
+ // El módulo se descarga con el sitio y no contiene datos personales.
+ return import("./client/private-squads.mjs");
+}
+async function loadPrivateSquad(teamId){
+ try{
+  var api=await privateAPI(),players=await api.getRoster(teamId);
+  if(state.profileTeam!==teamId||state.view!=="perfil")return;
+  state.privateSquad=players;state.privateSquadLoaded=true;render();
+ }catch(error){if(state.profileTeam===teamId){state.privateSquadLoaded=true;render();var info=el("squadMessage");if(info)info.textContent="No se puede leer el almacenamiento local: "+error.message}}
+}
+function bindSquadControls(){
+ var area=el("squadText");if(!area)return;
+ area.value=state.privateSquad.map(function(p){return [p.number,p.name,p.position].join(";")}).join("\n");
+ function info(message){var node=el("squadMessage");if(node)node.textContent=message}
+ var save=el("saveSquad");
+ save.addEventListener("click",async function(){
+  try{
+   if(!state.privateSquadLoaded)throw Error("La plantilla todavía no se ha cargado");
+   var api=await privateAPI(),teamId=state.profileTeam,players=api.parsePlayers(area.value);
+   await api.saveRoster(teamId,players);
+   if(state.profileTeam===teamId){state.privateSquad=players;render();info("Plantilla guardada solamente en este dispositivo.")}
+  }catch(e){info(e.message)}
+ });
+ el("removeSquad").addEventListener("click",async function(){
+  if(!confirm("¿Eliminar la plantilla guardada de este equipo en este dispositivo?"))return;
+  try{var api=await privateAPI();await api.deleteRoster(state.profileTeam);state.privateSquad=[];render();info("Plantilla eliminada del dispositivo.")}catch(e){info(e.message)}
+ });
+ el("exportSquads").addEventListener("click",async function(){
+  try{
+   var api=await privateAPI(),data=await api.exportBackup(state.data.teams.map(function(t){return t.id}));
+   var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+   var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="cantera-g4-plantillas-privadas.json";a.click();setTimeout(function(){URL.revokeObjectURL(url)},1000);
+   info("Copia descargada en el móvil. Contiene datos personales: guárdala en un lugar seguro.");
+  }catch(e){info(e.message)}
+ });
+ el("importSquads").addEventListener("click",function(){el("squadFile").click()});
+ el("squadFile").addEventListener("change",async function(e){
+  var file=e.target.files&&e.target.files[0];if(!file)return;
+  try{
+   if(file.size>50000)throw Error("Copia demasiado grande (máximo 50 KB)");
+   var api=await privateAPI(),data=JSON.parse(await file.text());
+   var teams=api.parseBackup(data,state.data.teams.map(function(t){return t.id}));
+   if(!confirm("Importar "+teams.length+" equipos desde la copia local y reemplazar sus plantillas existentes?"))return;
+   for(var item of teams)await api.saveRoster(item.teamId,item.players);
+   await loadPrivateSquad(state.profileTeam);
+   info("Copia importada. Los datos permanecen en este dispositivo.");
+  }catch(err){info("Error al importar: "+err.message)}finally{e.target.value=""}
+ });
+}
+
 function setData(d,meta){if(!d||d.groupCode!=="905432336"||d.competitionCode!=="905432332"||d.season!=="2026-2027"||!Array.isArray(d.teams)||d.teams.length<9||d.teams.length>16||!Array.isArray(d.matches))throw Error("Datos incompatibles con el grupo 4");
 state.data=d;el("round").innerHTML='<option value="all">Todas las jornadas</option>'+Array.from({length:9},function(_,i){return i+1}).map(function(n){return '<option value="'+n+'">Jornada '+n+((d.importedRounds||[]).includes(n)?" ✓":"")+"</option>"}).join("");el("round").value=state.round;
 el("team").innerHTML='<option value="">Todos los equipos</option>'+d.teams.map(function(t){return '<option value="'+safe(t.id)+'">'+safe(t.name)+"</option>"}).join("");el("team").value=state.team;

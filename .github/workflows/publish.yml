@@ -34,6 +34,7 @@ jobs:
           node --check client/venues.js
           node --check client/predictions.js
           node --check client/simulator.js
+          node --check client/private-squads.mjs
           node scripts/check-html.mjs
           node --test tests/*.test.mjs
       - name: Actualizar FFCV o conservar última versión verificada
