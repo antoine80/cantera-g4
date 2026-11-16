@@ -149,7 +149,50 @@ function validatePrivate(d){if(!d||d.season!=="2026-2027"||d.competitionCode!=="
 var ids=new Set(d.teams.map(function(t){return t.id}));if(ids.size!==9)throw Error("Lista de equipos no válida");
 for(var n=1;n<=9;n++){var m=d.matches.filter(function(x){return x.round===n}),b=d.byes.filter(function(x){return x.round===n});var used=m.flatMap(function(x){return [x.home,x.away]}).concat(b.map(function(x){return x.team}));if(m.length!==4||b.length!==1||used.length!==9||new Set(used).size!==9||used.some(function(x){return !ids.has(x)}))throw Error("Jornada "+n+" incompleta o incompatible")}}
 function getPrivate(){try{var raw=localStorage.getItem(PRIVATE_KEY);if(!raw)return null;var d=JSON.parse(raw);validatePrivate(d);return d}catch(e){return null}}
-async function load(){try{var privateData=getPrivate(),remote=null,meta=null;try{var response=await fetch("./data/league.json?v="+Date.now(),{cache:"no-store"});if(response.ok)remote=await response.json()}catch(err){}try{var sr=await fetch("./data/sync-status.json?v="+Date.now(),{cache:"no-store"});if(sr.ok)meta=await sr.json()}catch(err){}var newer=remote&&remote.updatedAt&&privateData&&new Date(remote.updatedAt)>new Date(privateData.capturedAt||0);if(newer){localStorage.removeItem(PRIVATE_KEY);privateData=null}if(!privateData&&!remote)throw Error("No hay datos disponibles sin conexión");setData(privateData||remote,privateData?null:meta)}catch(e){el("notice").style.display="block";el("notice").textContent="No se pudo cargar el calendario: "+e.message;el("content").innerHTML=empty("No hay datos disponibles","Inténtalo de nuevo más tarde.")}}
+// Consultar siempre la versión publicada: al abrir, al volver a la app y cada 5 minutos.
+var refreshInFlight=null,lastAutoCheck=0;
+async function load(){
+ if(refreshInFlight)return refreshInFlight;
+ refreshInFlight=(async function(){
+   var privateData=getPrivate(),remote=null,meta=null,now=Date.now();
+   var refreshButton=el("refresh");
+   refreshButton.disabled=true;
+   try{
+     var results=await Promise.allSettled([
+       fetch("./data/league.json?v="+now,{cache:"no-store"}).then(function(r){if(!r.ok)throw Error("HTTP "+r.status);return r.json()}),
+       fetch("./data/sync-status.json?v="+now,{cache:"no-store"}).then(function(r){if(!r.ok)throw Error("HTTP "+r.status);return r.json()})
+     ]);
+     if(results[0].status==="fulfilled")remote=results[0].value;
+     if(results[1].status==="fulfilled")meta=results[1].value;
+     var newer=remote&&remote.updatedAt&&privateData&&new Date(remote.updatedAt)>new Date(privateData.capturedAt||0);
+     if(newer){localStorage.removeItem(PRIVATE_KEY);privateData=null}
+     if(!privateData&&!remote){
+       // Si falla internet y ya había datos, mantenerlos visibles.
+       if(state.data){
+         el("notice").style.display="block";
+         el("notice").textContent="Sin conexión con el servidor. Se muestran los últimos datos cargados.";
+         return;
+       }
+       throw Error("No hay datos disponibles sin conexión");
+     }
+     setData(privateData||remote,privateData?null:meta);
+   }catch(e){
+     if(!state.data)el("content").innerHTML=empty("No hay datos disponibles","Comprueba tu conexión e inténtalo de nuevo.");
+     el("notice").style.display="block";
+     el("notice").textContent="No se pudo actualizar el calendario: "+e.message;
+   }finally{lastAutoCheck=Date.now();refreshButton.disabled=false}
+ })();
+ try{return await refreshInFlight}finally{refreshInFlight=null}
+}
+function checkWhenActive(){
+ if(document.visibilityState!=="visible"||!navigator.onLine)return;
+ if(Date.now()-lastAutoCheck<30000)return;
+ load();
+}
+document.addEventListener("visibilitychange",checkWhenActive);
+window.addEventListener("focus",checkWhenActive);
+window.addEventListener("online",checkWhenActive);
+setInterval(function(){if(document.visibilityState==="visible"&&navigator.onLine)load()},5*60*1000);
 el("importLocal").addEventListener("click",function(){el("fileLocal").click()});
 el("fileLocal").addEventListener("change",async function(e){var f=e.target.files&&e.target.files[0];if(!f)return;try{if(f.size>25000000)throw Error("Archivo demasiado grande (máximo 25 MB)");var input=JSON.parse(await f.text()),data=input,report="Calendario privado importado";if(input&&input.log&&Array.isArray(input.log.entries)){var serverData=await fetch("./data/league.json?v="+Date.now(),{cache:"no-store"});if(!serverData.ok)throw Error("No se pudo leer la lista de equipos");var result=CanteraHar.fromHar(input,await serverData.json(),getPrivate());data=result.data;report=result.importedRounds.length===9?"Nueve jornadas importadas desde el HAR":"Actualizadas jornadas: "+result.importedRounds.join(", ")}validatePrivate(data);localStorage.setItem(PRIVATE_KEY,JSON.stringify(data));setData(data);alert(report+". Los datos permanecen en este navegador.")}catch(err){alert("No se pudo importar: "+err.message)}finally{e.target.value=""}});
 el("clearLocal").addEventListener("click",function(){try{localStorage.removeItem(PRIVATE_KEY)}catch(e){}load()});
