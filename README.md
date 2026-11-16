@@ -81,3 +81,7 @@ La página consulta `league.json` y `sync-status.json` con `cache: no-store` al 
 ## Fichas de los equipos
 
 La sección de equipos incorpora fichas individuales con escudo, posición, puntos, partidos disputados, goles a favor/en contra, calendario y resultados. Proceden del JSON oficial ya sincronizado y evitan duplicar nombres, fotos u otros datos personales de menores. Las plantillas nominales y alineaciones no se importan hasta verificar una fuente federativa pública apropiada y las condiciones aplicables para reutilizarlas.
+
+## Plantillas y actas oficiales FFCV
+
+Cada partido con identificador oficial `actaId` validado muestra un enlace a `https://ffcv.es/competiciones/partidos/partido.php?cod_partido=<ID>#plantillas`. Se abre la ficha de FFCV, donde el visitante puede consultar directamente las plantillas y el acta según la disponibilidad oficial. No importamos ni almacenamos nombres, imágenes, fechas de nacimiento u otros datos personales de futbolistas menores. La sección existe tanto en el calendario como en la ficha de cada equipo. Si FFCV cambia el identificador o requiere acceso, el enlace depende de su disponibilidad.
