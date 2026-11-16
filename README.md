@@ -77,3 +77,7 @@ Limitaciones: GitHub Pages es una web pública y el botón es visible para todos
 ## Actualización al abrir la PWA (noviembre 2026)
 
 La página consulta `league.json` y `sync-status.json` con `cache: no-store` al abrir, al recuperar el foco o la conexión, y cada cinco minutos mientras esté visible. Los cambios de foco se limitan a una comprobación cada 30 segundos y las descargas simultáneas se deduplican. El Service Worker usa network-first para ambos JSON, con copia local cuando no hay conexión. Abrir la aplicación **no lanza una descarga directa de FFCV**: solicita los últimos datos que GitHub Pages haya publicado mediante la sincronización programada. Los resultados no se muestran como actuales si la federación no se ha sincronizado.
+
+## Fichas de los equipos
+
+La sección de equipos incorpora fichas individuales con escudo, posición, puntos, partidos disputados, goles a favor/en contra, calendario y resultados. Proceden del JSON oficial ya sincronizado y evitan duplicar nombres, fotos u otros datos personales de menores. Las plantillas nominales y alineaciones no se importan hasta verificar una fuente federativa pública apropiada y las condiciones aplicables para reutilizarlas.

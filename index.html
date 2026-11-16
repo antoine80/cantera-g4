@@ -52,7 +52,7 @@ table{width:100%;border-collapse:collapse;min-width:650px;font-size:13px}
 th{background:#eaf1f8;color:#56718c;text-align:left;font-size:11px}
 th,td{padding:13px 12px;border-bottom:1px solid #eef2f6}td strong{color:#0a4979}
 .explain{font-size:13px;color:#698095;margin:0 0 14px;line-height:1.5}
-.teams{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.team{padding:15px;display:flex;align-items:center;gap:12px}.team .label{flex:1;font-size:13px;font-weight:720}.team small{display:block;font-weight:400;color:#8396a8;margin-top:5px}.favorite{border:0;background:#f1f5fa;border-radius:11px;font-size:24px;color:#92a1b2;padding:6px 12px}.favorite.active{color:#e6a325}
+.teams{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.team{padding:15px;display:flex;align-items:center;gap:12px}.team .label{flex:1;font-size:13px;font-weight:720}.team small{display:block;font-weight:400;color:#8396a8;margin-top:5px}.team-info{display:block;border:0;background:none;padding:3px 0;color:#0a5687;font-size:12px;font-weight:750;text-align:left;text-decoration:underline;cursor:pointer}.profile-hero{display:flex;align-items:center;gap:18px;background:white;padding:22px;border-radius:16px;border:1px solid #e1e8ef;margin:14px 0 20px}.profile-hero .crest{width:76px;height:76px;min-width:76px}.profile-hero h3{margin:0 0 7px;font-size:22px;line-height:1.25}.profile-hero p{margin:0;color:#73849a;font-size:12px}.favorite{border:0;background:#f1f5fa;border-radius:11px;font-size:24px;color:#92a1b2;padding:6px 12px}.favorite.active{color:#e6a325}
 .empty{background:white;border:1px dashed #d0dfea;border-radius:15px;padding:32px;text-align:center;color:#6d8096}.empty strong{color:#193b58}
 footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top:42px}.bottom{display:none}
 @media(max-width:650px){.hero{padding-top:35px}.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:26px}.metric span{font-size:9px}.fixtures,.teams{grid-template-columns:1fr}.head h2{font-size:22px}.controls label{flex:1}select{width:100%;min-width:0}.bottom{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:4;background:#fff;border-top:1px solid #dfebf5;box-shadow:0 -5px 25px #20395011;padding:9px 10px calc(8px + env(safe-area-inset-bottom));justify-content:space-around}.bottom button{border:0;background:transparent;font-size:11px;color:#638098;display:grid;gap:5px;justify-items:center}.bottom button span{font-size:21px}.bottom button.active{color:#126da8;font-weight:800}.tabs{display:none}main{padding-bottom:150px}}
@@ -74,7 +74,7 @@ footer{font-size:12px;line-height:1.6;color:#8091a0;text-align:center;margin-top
 <script src="./client/simulator.js"></script>
 <script>
 "use strict";
-var state={data:null,view:"partidos",round:"all",team:"",favorites:[],simulation:{}};
+var state={data:null,view:"partidos",round:"all",team:"",favorites:[],simulation:{},profileTeam:null,previousView:"equipos"};
 try{state.favorites=JSON.parse(localStorage.getItem("cantera-g4-favorites")||"[]")}catch(e){state.favorites=[]}
 function el(id){return document.getElementById(id)}
 function safe(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
@@ -100,7 +100,29 @@ return '<div class="roundhead"><span>JORNADA '+r+'</span><small>'+(verified?"Dat
 function classification(){var official=Array.isArray(state.data.officialStandings)&&state.data.officialStandings.length>0;var rows=official?state.data.officialStandings:standings();var notice='<p class="explain">'+(official?"Clasificación oficial FFCV"+(state.data.officialStandingsRound?" · Jornada "+state.data.officialStandingsRound:"")+". Incluye los ajustes federativos publicados.":"Clasificación provisional calculada a partir de los marcadores finales disponibles. No incluye sanciones ni ajustes federativos.")+"</p>";
 return notice+'<div class="tablewrap"><table><thead><tr><th>POS</th><th>EQUIPO</th><th>PTS</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th></tr></thead><tbody>'+rows.map(function(r,i){return "<tr><td>"+(official?r.rank:i+1)+"</td><td><span class=\"rank-team\">"+crest(team(r.id))+"<span>"+safe(r.name||name(r.id))+"</span></span></td><td><strong>"+r.PTS+"</strong></td><td>"+r.PJ+"</td><td>"+r.PG+"</td><td>"+r.PE+"</td><td>"+r.PP+"</td><td>"+r.GF+"</td><td>"+r.GC+"</td></tr>"}).join("")+"</tbody></table></div>"}
 function teams(onlyFav){var list=state.data.teams.filter(function(t){return (!onlyFav||state.favorites.includes(t.id))&&(!state.team||t.id===state.team)});if(!list.length)return empty(onlyFav?"Todavía no hay favoritos":"Ningún equipo","En Equipos puedes pulsar la estrella para guardar tus favoritos.");
-return '<div class="teams">'+list.map(function(t){var active=state.favorites.includes(t.id);return '<article class="team">'+crest(t)+'<div class="label">'+safe(t.name)+'<small>'+state.data.matches.filter(function(m){return m.home===t.id||m.away===t.id}).length+' partidos disponibles</small></div><button class="favorite '+(active?"active":"")+'" data-fav="'+safe(t.id)+'" aria-label="Favorito de '+safe(t.name)+'">'+(active?"★":"☆")+"</button></article>"}).join("")+"</div>"}
+return '<div class="teams">'+list.map(function(t){var active=state.favorites.includes(t.id);return '<article class="team">'+crest(t)+'<div class="label">'+safe(t.name)+'<small>'+state.data.matches.filter(function(m){return m.home===t.id||m.away===t.id}).length+' partidos disponibles</small><button type="button" class="team-info" data-team-profile="'+safe(t.id)+'" aria-label="Ver ficha de '+safe(t.name)+'">Ver ficha del equipo ↗</button></div><button class="favorite '+(active?"active":"")+'" data-fav="'+safe(t.id)+'" aria-label="Favorito de '+safe(t.name)+'">'+(active?"★":"☆")+"</button></article>"}).join("")+"</div>"}
+
+function teamProfileView(){
+ var d=state.data,t=d.teams.find(function(x){return x.id===state.profileTeam});
+ if(!t)return empty("Equipo no encontrado","Regresa a la lista de equipos.");
+ var list=d.matches.filter(function(m){return m.home===t.id||m.away===t.id})
+   .sort(function(a,b){return a.round-b.round||a.date.localeCompare(b.date)});
+ var official=(d.officialStandings||[]).find(function(r){return r.id===t.id});
+ var completed=list.filter(finished),played=official?official.PJ:completed.length;
+ var goalsFor=official?official.GF:completed.reduce(function(total,m){return total+(m.home===t.id?m.homeScore:m.awayScore)},0);
+ var goalsAgainst=official?official.GC:completed.reduce(function(total,m){return total+(m.home===t.id?m.awayScore:m.homeScore)},0);
+ var points=official?official.PTS:completed.reduce(function(total,m){var a=m.home===t.id?m.homeScore:m.awayScore,b=m.home===t.id?m.awayScore:m.homeScore;return total+(a>b?3:a===b?1:0)},0);
+ var position=official?official.rank:"—";
+ var intro='<button type="button" class="ghost" id="backTeams">← Volver a equipos</button>'+
+ '<div class="profile-hero">'+crest(t)+'<div><h3>'+safe(t.name)+'</h3><p>Benjamín 1.º año · Grupo 4 · Temporada 2026–2027</p></div></div>';
+ var scores='<div class="metrics"><div class="metric"><strong>'+safe(position)+'</strong><span>POSICIÓN OFICIAL</span></div><div class="metric"><strong>'+safe(points)+'</strong><span>PUNTOS</span></div><div class="metric"><strong>'+safe(played)+'</strong><span>JUGADOS</span></div></div>'+
+ '<div class="metrics"><div class="metric"><strong>'+safe(goalsFor)+'</strong><span>GOLES A FAVOR</span></div><div class="metric"><strong>'+safe(goalsAgainst)+'</strong><span>GOLES EN CONTRA</span></div><div class="metric"><strong>'+safe(goalsFor-goalsAgainst)+'</strong><span>DIFERENCIA</span></div></div>';
+ var games=list.map(function(m){var rival=m.home===t.id?m.away:m.home,home=m.home===t.id;
+   return '<article class="match" style="padding:15px"><div class="matchtop" style="margin:-15px -15px 13px"><span>Jornada '+m.round+' · '+safe(when(m.date))+'</span><span class="tag">'+(home?"LOCAL":"VISITANTE")+'</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><strong>'+safe(name(rival))+'</strong><strong>'+ (finished(m)?m.homeScore+' – '+m.awayScore:safe(m.time||"Pendiente"))+'</strong></div>'+(m.venue?'<p class="explain" style="margin:10px 0 0">📍 '+safe(m.venue)+'</p>':"")+'</article>';
+ }).join("");
+ var source='<p class="explain">Estadísticas de la clasificación oficial FFCV cuando está disponible; de lo contrario, calculadas con los partidos finalizados. Las alineaciones y nombres de menores no se reproducen sin verificar la fuente y su autorización para reutilizarlos.</p>';
+ return intro+scores+'<h3>Calendario y resultados</h3><div class="fixtures">'+games+'</div>'+source;
+}
 function simulatorView(){
  var d=state.data,focus=d.teams.find(function(t){return t.id==="betis"||/Betis Florida/i.test(t.name)});
  if(!focus)return empty("Betis Florida no encontrado","No se puede simular sin el equipo.");
@@ -127,9 +149,11 @@ function predictionsView(){
  return intro+summary+'<div class="head"><h2>Próximos rivales</h2></div><div class="fixtures">'+cards+'</div><p class="explain" style="margin-top:18px">Modelo: distribución de Poisson con ajuste de localía y suavizado para muestras pequeñas. La diferencia de goles es real; los goles esperados y los pronósticos son estimaciones. La clasificación oficial puede incluir sanciones y otros ajustes.</p>'
 }
 function render(){if(!state.data)return;var d=state.data;el("metrics").innerHTML='<div class="metric"><strong>'+d.teams.length+'</strong><span>EQUIPOS</span></div><div class="metric"><strong>'+(d.importedRounds||[]).length+'/'+d.expectedRounds+'</strong><span>JORNADAS IMPORTADAS</span></div><div class="metric"><strong>'+d.matches.filter(finished).length+'</strong><span>PARTIDOS FINALIZADOS</span></div>';
-document.querySelectorAll("[data-view]").forEach(function(b){b.classList.toggle("active",b.dataset.view===state.view)});el("heading").textContent={partidos:"Jornadas y partidos",clasificacion:"Clasificación",equipos:"Equipos del grupo",favoritos:"Mis favoritos",pronosticos:"Pronósticos Betis Florida",simulador:"Simulador Betis Florida"}[state.view];el("roundbox").style.display=state.view==="partidos"?"flex":"none";el("teambox").style.display=(state.view==="clasificacion"||state.view==="pronosticos"||state.view==="simulador")?"none":"flex";
-el("content").innerHTML=state.view==="partidos"?fixtures():state.view==="clasificacion"?classification():state.view==="pronosticos"?predictionsView():state.view==="simulador"?simulatorView():teams(state.view==="favoritos");
-document.querySelectorAll("[data-sim]").forEach(function(input){input.addEventListener("change",function(){
+document.querySelectorAll("[data-view]").forEach(function(b){b.classList.toggle("active",b.dataset.view===state.view)});el("heading").textContent={partidos:"Jornadas y partidos",clasificacion:"Clasificación",equipos:"Equipos del grupo",favoritos:"Mis favoritos",pronosticos:"Pronósticos Betis Florida",simulador:"Simulador Betis Florida",perfil:"Ficha del equipo"}[state.view];el("roundbox").style.display=state.view==="partidos"?"flex":"none";el("teambox").style.display=(state.view==="clasificacion"||state.view==="pronosticos"||state.view==="simulador"||state.view==="perfil")?"none":"flex";
+el("content").innerHTML=state.view==="partidos"?fixtures():state.view==="clasificacion"?classification():state.view==="pronosticos"?predictionsView():state.view==="simulador"?simulatorView():state.view==="perfil"?teamProfileView():teams(state.view==="favoritos");
+document.querySelectorAll("[data-team-profile]").forEach(function(b){b.addEventListener("click",function(){state.previousView=state.view;state.profileTeam=b.dataset.teamProfile;state.view="perfil";render();document.getElementById("heading").scrollIntoView({block:"start",behavior:"smooth"})})});
+ var back=el("backTeams");if(back)back.addEventListener("click",function(){state.view=state.previousView||"equipos";state.profileTeam=null;render()});
+ document.querySelectorAll("[data-sim]").forEach(function(input){input.addEventListener("change",function(){
  var key=input.getAttribute("data-sim"),side=input.getAttribute("data-side"),raw=input.value.trim();
  var current=state.simulation[key]||{home:null,away:null};
  current[side]=raw!==""&&/^\\d+$/.test(raw)&&Number(raw)<=30?Number(raw):null;
